@@ -127,7 +127,7 @@ Pakistani consumers lack accessible, evidence-based information about food safet
 | **Process Manager** | PM2                                                   | Production-grade Node.js process management on EC2                                                                                |
 | **Reverse Proxy**   | Nginx                                                 | SSL termination, static file serving, rate limiting                                                                               |
 | **CI/CD**           | GitHub Actions                                        | Free for public repos; automated testing and deployment                                                                           |
-| **Version Control** | Git + GitHub                                          | Two repositories: `safebite-backend` and `safebite-mobile`                                                                        |
+| **Version Control** | Git + GitHub                                          | Two repositories: `SafeBite-Backend` and `SafeBite-Mobile`                                                                        |
 
 ---
 
