@@ -14,7 +14,7 @@
 
 > **AI-powered food safety intelligence for Pakistani consumers.**
 >
-> SafeBite analyzes heavy metal contamination in everyday food products, compares findings against international safety standards (Codex Alimentarius, EU, PSQCA), and delivers actionable safety insights through a mobile app — powered by a RAG-based AI chatbot.
+> SafeBite analyzes heavy metal contamination in everyday food products, compares findings against international safety standards (Codex Alimentarius (WHO/FAO), EU, PSQCA), and delivers actionable safety insights through a mobile app — powered by a RAG-based AI chatbot.
 
 ---
 
