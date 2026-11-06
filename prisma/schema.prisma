@@ -1,0 +1,269 @@
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+// 1. User & Account Management (FR-14, FR-16)
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  passwordHash  String
+  fullName      String?
+  role          String          @default("USER") // USER, ADMIN
+  healthConsent Boolean         @default(false)
+  consentDate   DateTime?
+  healthTags    String[]        @default([]) // e.g. ["PREGNANCY", "INFANT", "KIDNEY_ISSUE"]
+  searchHistory SearchHistory[]
+  scanHistory   ScanHistory[]
+  favorites     Favorite[]
+  watchlist     Watchlist[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("users")
+}
+
+// 2. Taxonomy & Products (FR-01, FR-02, 3.4.1)
+model Category {
+  id           String              @id @default(uuid())
+  name         String              @unique // 20 Categories (e.g. Packaged Milk, Spices, Noodles, Chocolate)
+  description  String?
+  products     Product[]
+  standards    ReferenceStandard[]
+  researchData ResearchData[]
+  createdAt    DateTime            @default(now())
+
+  @@map("categories")
+}
+
+model Product {
+  id              String           @id @default(uuid())
+  barcode         String?          @unique // EAN-13 or UPC-A
+  name            String
+  brand           String
+  categoryId      String
+  category        Category         @relation(fields: [categoryId], references: [id])
+  imageUrl        String?
+  packageSize     String?
+  matrix          String?          // Liquid, powder, solid, etc.
+  researchData    ResearchData[]
+  analysisResults AnalysisResult[]
+  favorites       Favorite[]
+  watchlist       Watchlist[]
+  scanHistory     ScanHistory[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([barcode])
+  @@index([name])
+  @@index([brand])
+  @@map("products")
+}
+
+// 3. Research Evidence & Heavy Metal Observations (FR-03, FR-10, 3.4.2, 3.4.4)
+enum ContaminantType {
+  LEAD     // Pb
+  CADMIUM  // Cd
+  CHROMIUM // Cr
+  COBALT   // Co
+  COPPER   // Cu
+}
+
+enum EvidenceLevel {
+  PRODUCT_SPECIFIC
+  BRAND_LEVEL
+  CATEGORY_LEVEL
+}
+
+model ResearchSource {
+  id              String         @id @default(uuid())
+  title           String
+  authors         String
+  publicationYear Int
+  journal         String?
+  location        String?        // e.g. Lahore, Faisalabad, Karachi
+  sampleSize      Int?
+  methodology     String?        // e.g. ICP-OES, AAS
+  doi             String?
+  url             String?
+  researchData    ResearchData[]
+  createdAt       DateTime       @default(now())
+
+  @@map("research_sources")
+}
+
+model ResearchData {
+  id                String          @id @default(uuid())
+  productId         String?
+  product           Product?        @relation(fields: [productId], references: [id])
+  brand             String?
+  categoryId        String
+  category          Category        @relation(fields: [categoryId], references: [id])
+  contaminant       ContaminantType
+  concentration     Float?          // Numeric measurement in specified unit
+  unit              String          // mg/kg, ppm, ug/L
+  basis             String          // wet_mass, dry_mass, mass, volume
+  evidenceLevel     EvidenceLevel
+  measurementStatus String          // MEASURED, NOT_TESTED, BELOW_LOD, RANGE_VALUE
+  rawLOD            Float?          // Limit of Detection
+  sourceId          String
+  source            ResearchSource  @relation(fields: [sourceId], references: [id])
+  createdAt         DateTime        @default(now())
+
+  @@index([contaminant])
+  @@index([evidenceLevel])
+  @@map("research_data")
+}
+
+// 4. Regulatory Reference Standards (FR-04, 3.4.5)
+enum StandardAuthority {
+  PSQCA // Primary National Reference for Pakistan
+  CODEX // International Fallback
+  EU    // Secondary Reference
+}
+
+enum ReferenceRole {
+  PRIMARY_NATIONAL
+  INTERNATIONAL_FALLBACK
+  SECONDARY_COMPARISON
+}
+
+model ReferenceStandard {
+  id            String            @id @default(uuid())
+  authority     StandardAuthority
+  standardCode  String            // e.g. "PS: 5344-2022", "CXS 193-1995"
+  version       String
+  contaminant   ContaminantType
+  categoryId    String
+  category      Category          @relation(fields: [categoryId], references: [id])
+  productMatrix String?           // e.g. "Packaged liquid milk"
+  limitValue    Float
+  unit          String            // mg/kg, ppm
+  basis         String            // wet_mass, dry_mass
+  referenceRole ReferenceRole
+  notes         String?
+  sourceUrl     String?
+  effectiveDate DateTime?
+  createdAt     DateTime          @default(now())
+
+  @@unique([authority, standardCode, contaminant, categoryId, productMatrix])
+  @@map("reference_standards")
+}
+
+// 5. Versioned Analysis Results & Grades (FR-04, FR-05, FR-06, FR-07, 3.4.3)
+model AnalysisResult {
+  id                 String           @id @default(uuid())
+  productId          String
+  product            Product          @relation(fields: [productId], references: [id])
+  ruleVersion        String           // e.g. "1.0.0"
+  clrBreakdown       Json             // Array of per-contaminant CLR, Margin, Status, Selected Limit
+  maxClr             Float?
+  highestContaminant ContaminantType?
+  cci                Float?           // Cumulative Contamination Index (mean of eligible CLRs)
+  grade              String?          // A, B, C, D, E, F or null
+  gradeEligible      Boolean          @default(false)
+  statusText         String           // From Status Catalogue (e.g. "Below Limit", "Insufficient Data")
+  reasonCode         String?          // From Reason Codes (e.g. "MIN_ELIGIBLE_NOT_MET")
+  eligibleCount      Int              @default(0)
+  testedCount        Int              @default(0)
+  excludedReasons    Json             // Map of contaminant -> reasonCode
+  calculatedAt       DateTime         @default(now())
+
+  @@index([productId, ruleVersion])
+  @@map("analysis_results")
+}
+
+// 6. Curated Guidance & Health Context (FR-16, FR-17, 3.4.7, 3.4.8)
+model HealthContextEvidence {
+  id               String          @id @default(uuid())
+  contaminant      ContaminantType
+  tag              String          // "PREGNANCY", "INFANT", "GENERAL"
+  summary          String
+  evidenceStrength String          // STRONG, MODERATE, EMERGING
+  sourceCitation   String
+  reviewer         String
+  reviewDate       DateTime
+  createdAt        DateTime        @default(now())
+
+  @@map("health_context_evidence")
+}
+
+model ExposureReductionGuidance {
+  id             String   @id @default(uuid())
+  clrBand        String   // "BELOW_LIMIT", "CLOSE_TO_LIMIT", "AT_LIMIT", "ABOVE_LIMIT"
+  guidanceText   String
+  sourceCitation String
+  reviewer       String
+  reviewDate     DateTime
+  createdAt      DateTime @default(now())
+
+  @@map("exposure_reduction_guidance")
+}
+
+// 7. Vector Store for RAG Assistant (FR-11, 3.4.10)
+model VectorStore {
+  id             String                       @id @default(uuid())
+  sourceRecordId String
+  sourceType     String                       // "RESEARCH_SOURCE", "STANDARD", "HEALTH_CONTEXT"
+  content        String
+  embedding      Unsupported("vector(1536)")? // pgvector 1536 dimensions
+  embeddingModel String                       @default("text-embedding-3-small")
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  @@index([sourceType])
+  @@map("vector_store")
+}
+
+// 8. User History & Lists (FR-12, FR-13)
+model SearchHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query      String
+  searchedAt DateTime @default(now())
+
+  @@map("search_history")
+}
+
+model ScanHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  scannedAt  DateTime @default(now())
+
+  @@map("scan_history")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+model Watchlist {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  lastKnownGrade String?
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("watchlist")
+}

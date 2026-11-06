@@ -1,0 +1,22 @@
+Overview
+An analysis of the SafeBite PSQCA Food Standards Regulatory Limits dataset was conducted. The dataset comprises 438 regulatory threshold specifications spanning 110 distinct PSQCA standard documents set by the Pakistan Standards & Quality Control Authority (PSQCA).
+________________________________________
+Assumptions & Methodology
+•	Contaminant Standardization: Individual contaminant entries were standardized into unified chemical and biological hazard groupings (e.g., aggregating variant listings of Lead into Lead (Pb)).
+•	Macro Food Group Classification: The distinct food categories were aggregated into 10 broader macro groups (e.g., Beverages & Water, Fats & Oils, Spices & Condiments) to evaluate sector-level regulatory patterns.
+________________________________________
+Key Takeaways & Insights
+1. Heavy Metals Form the Core Focus of Food Safety Limits
+•	Dominance of Toxic Elements: Heavy metals and metallic elements represent over 70% of all established threshold limits in the standards framework. Lead (Pb) is the most widely controlled contaminant with 112 limit entries, followed by Arsenic (As) (69 entries), Copper (Cu) (44 entries), Cadmium (Cd) (33 entries), Tin (Sn) (31 entries), and Iron (Fe) (26 entries).
+•	Strict Legal Enforcement: Out of 438 total entries, 437 (>99.7%) are categorized as legally binding "Maximum / Permissible Limits" rather than advisory non-binding guidelines.
+•	Element-Specific Hazards: While Lead and Arsenic are regulated across nearly all food types, specific metals like Tin (Sn) (31 entries) are concentrated in canned seafood and processed fruits to mitigate risks associated with packaging corrosion and leaching.
+•	The chart "Top 10 Regulated Contaminants in Food Standards" details the breakdown of the most frequently specified contaminants across all standard documents.
+2. Regulatory Oversight Highlights High-Risk Food Groups
+•	Priority Food Sectors: Regulatory specifications are concentrated in staple liquid and fat categories. Beverages & Water accounts for the largest volume of limits (102 entries), followed by Fats & Oils (78 entries), Spices, Salts & Condiments (63 entries), and Meat, Fish & Seafood (51 entries).
+•	Targeted Hazard Profiles: In Fats & Oils, standards strictly limit pro-oxidant heavy metals—specifically Lead (19 limits), Arsenic (18 limits), Copper (18 limits), and Iron (18 limits)—to prevent rancidity and toxicity during refining.
+•	Mycotoxin Controls in Dry Goods: Fungal toxins (Aflatoxins) are prioritized in high-moisture/storage-sensitive agricultural commodities, led by Spices, Salts & Condiments (13 limits), Grains, Cereals & Pulses (6 limits), Dairy & Infant Formula (5 limits), and Nuts & Seeds (4 limits).
+•	The charts "Distribution of Regulatory Standard Limits Across Food Categories" and "Contaminant Prevalence Across Food Category Groups" illustrate the distribution of regulatory thresholds across food classifications.
+3. Framework Integrates Codex Standards with Dedicated Local Regulations
+•	Global Alignment: The Codex General Standard for Contaminants and Toxins in Food and Feed (PS CXS 193) is the primary foundation, contributing 77 general limit specifications across broad food categories.
+•	Granular Domestic Standards: PSQCA maintains detailed multi-parameter standards for key consumer staples, led by PS 2102-2010 (Bottled Natural Mineral Water) with 17 parameter specifications, as well as specific fruit nectar standards (PS 4450-1999, PS 2098-1989, PS 4451-1999) containing 8 threshold specifications each.
+
