@@ -11,8 +11,25 @@ import { env } from "./config/env.js";
 export function createApp(): Express {
   const app: Express = express();
 
-  // Security Headers
-  app.use(helmet());
+  // Trust 1 proxy hop (VS Code Port Forwarding in dev, Nginx / ALB in production)
+  app.set("trust proxy", 1);
+
+  // Security Headers (disable HTTPS-only upgrades & HSTS in non-production so LAN HTTP Swagger UI works)
+  app.use(
+    helmet(
+      env.NODE_ENV === "production"
+        ? undefined
+        : {
+            contentSecurityPolicy: {
+              directives: {
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                "upgrade-insecure-requests": null,
+              },
+            },
+            hsts: false,
+          }
+    )
+  );
 
   // CORS Configuration
   const allowedOrigins = env.CORS_ORIGIN === "*" ? "*" : env.CORS_ORIGIN.split(",");
