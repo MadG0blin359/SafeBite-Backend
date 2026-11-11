@@ -1,13 +1,13 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-20_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
   <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/pgvector-Vector_Search-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="pgvector" />
   <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
   <img src="https://img.shields.io/badge/Groq-Fallback_LLM-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
-  <img src="https://img.shields.io/badge/AWS-Free_Tier-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS" />
+  <img src="https://img.shields.io/badge/AWS-Cloud-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS" />
 </p>
 
 # 🛡️ SafeBite — Backend API
@@ -51,7 +51,7 @@ Pakistani consumers lack accessible, evidence-based information about food safet
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    AWS Free Tier Account                    │
+│                    AWS Cloud Environment                    │
 │  ┌─────────────────┐         ┌──────────────────────────┐   │
 │  │   S3 Bucket     │         │    EC2 t2.micro (1GB)    │   │
 │  │  safebite-assets│         │  ┌────────────────────┐  │   │
@@ -122,11 +122,11 @@ Pakistani consumers lack accessible, evidence-based information about food safet
 | **ORM**             | Prisma                                                | Schema-first, auto-generated TypeScript types, version-controlled migrations, excellent PostgreSQL support                        |
 | **Database**        | PostgreSQL 15 + pgvector                              | ACID compliance for research data; pgvector enables semantic search without a separate vector database                            |
 | **AI / LLM**        | OpenAI API (GPT-4o-mini + text-embedding-3-small)     | GPT-4o-mini: $0.60/M input tokens; text-embedding-3-small: $0.02/M tokens; ~$0.01 total for 262 records                          |
-| **AI Fallback**     | LLM Provider Abstraction Layer                        | Interface-based architecture enables hot-swapping to Groq (free tier) or local models                                            |
-| **Cloud**           | AWS Free Tier                                         | EC2 t2.micro + RDS db.t3.micro + S3; 12 months free; industry-standard                                                           |
+| **AI Fallback**     | LLM Provider Abstraction Layer                        | Interface-based architecture enables hot-swapping to Groq or local models                                                        |
+| **Cloud**           | AWS                                                   | EC2 t2.micro + RDS db.t3.micro + S3; scalable, industry-standard cloud infrastructure                                            |
 | **Process Manager** | PM2                                                   | Production-grade Node.js process management on EC2                                                                                |
 | **Reverse Proxy**   | Nginx                                                 | SSL termination, static file serving, rate limiting                                                                               |
-| **CI/CD**           | GitHub Actions                                        | Free for public repos; automated testing and deployment                                                                           |
+| **CI/CD**           | GitHub Actions                                        | Automated testing and deployment workflows                                                                                        |
 | **Version Control** | Git + GitHub                                          | Two repositories: `SafeBite-Backend` and `SafeBite-Mobile`                                                                        |
 
 ---
@@ -190,7 +190,7 @@ The server will start at `http://localhost:3000`.
 | `GET`  | `/api/alternatives/:productId` | Safer alternatives in the same category  |
 | `POST` | `/api/chat`                    | RAG-powered chatbot query                |
 
-> **Note:** Full API documentation is available via Swagger UI at `/api-docs` when the server is running.
+> **Note:** Full API documentation is available via Swagger UI at `/docs` (and the raw OpenAPI spec at `/openapi.json`) when the server is running.
 
 ---
 
