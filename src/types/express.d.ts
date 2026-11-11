@@ -4,6 +4,7 @@ export interface SafeBiteUserPayload {
   fullName?: string | null;
   role: string;
   healthConsent?: boolean;
+  tokenVersion?: number;
 }
 
 declare global {

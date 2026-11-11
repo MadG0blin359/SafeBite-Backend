@@ -55,9 +55,26 @@ export const signOut = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
-  await authService.resetPassword(req.body.email);
+  await authService.requestPasswordReset(req.body.email);
   res.status(200).json({
     success: true,
-    message: "If an account exists with that email, instructions have been sent.",
+    message: "If an account exists with that email, a 6-digit verification code has been sent.",
+  });
+};
+
+export const verifyResetOtp = async (req: Request, res: Response): Promise<void> => {
+  const result = await authService.verifyResetOtp(req.body);
+  res.status(200).json({
+    success: true,
+    message: "Verification code confirmed.",
+    data: result,
+  });
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  await authService.completePasswordReset(req.body);
+  res.status(200).json({
+    success: true,
+    message: "Password reset successfully. Please sign in with your new password.",
   });
 };

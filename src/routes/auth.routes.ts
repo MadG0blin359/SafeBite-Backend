@@ -6,6 +6,8 @@ import {
   updateProfile,
   signOut,
   forgotPassword,
+  verifyResetOtp,
+  resetPassword,
 } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -14,6 +16,8 @@ import {
   signUpSchema,
   signInSchema,
   updateProfileSchema,
+  forgotPasswordSchema,
+  verifyResetOtpSchema,
   resetPasswordSchema,
 } from "../validators/auth.validator.js";
 
@@ -24,7 +28,9 @@ router.use(authRateLimiter);
 
 router.post("/signup", validate({ body: signUpSchema }), signUp);
 router.post("/login", validate({ body: signInSchema }), signIn);
-router.post("/forgot-password", validate({ body: resetPasswordSchema }), forgotPassword);
+router.post("/forgot-password", validate({ body: forgotPasswordSchema }), forgotPassword);
+router.post("/verify-reset-otp", validate({ body: verifyResetOtpSchema }), verifyResetOtp);
+router.post("/reset-password", validate({ body: resetPasswordSchema }), resetPassword);
 
 // Protected routes
 router.get("/profile", requireAuth, getProfile);

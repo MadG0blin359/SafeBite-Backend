@@ -14,6 +14,17 @@ import { z } from "zod";
  */
 const strictNameRegex = /^[\p{L}]+(?:[' -][\p{L}]+)*$/u;
 
+const emailSchema = z
+  .string({ required_error: "Email address is required" })
+  .trim()
+  .toLowerCase()
+  .email({ message: "Invalid email address" });
+
+const passwordPolicySchema = z
+  .string({ required_error: "Password is required" })
+  .min(6, { message: "Password must be at least 6 characters long" })
+  .max(72, { message: "Password cannot exceed 72 characters" });
+
 export const fullNameSchema = z
   .string({ required_error: "Full name is required" })
   .refine(
@@ -41,16 +52,13 @@ export const fullNameSchema = z
   );
 
 export const signUpSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }).trim().toLowerCase(),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters long" })
-    .max(72, { message: "Password cannot exceed 72 characters" }),
+  email: emailSchema,
+  password: passwordPolicySchema,
   fullName: fullNameSchema.optional(),
 });
 
 export const signInSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }).trim().toLowerCase(),
+  email: emailSchema,
   password: z
     .string()
     .min(1, { message: "Password is required" })
@@ -61,10 +69,30 @@ export const updateProfileSchema = z.object({
   fullName: fullNameSchema.optional(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const verifyResetOtpSchema = z.object({
+  email: emailSchema,
+  otp: z
+    .string({ required_error: "Verification code is required" })
+    .trim()
+    .regex(/^\d{6}$/, { message: "Verification code must be a 6-digit number" }),
+});
+
 export const resetPasswordSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }).trim().toLowerCase(),
+  resetToken: z
+    .string({ required_error: "Reset token is required" })
+    .trim()
+    .min(1, { message: "Reset token is required" })
+    .max(128, { message: "Reset token is invalid" }),
+  newPassword: passwordPolicySchema,
 });
 
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type VerifyResetOtpInput = z.infer<typeof verifyResetOtpSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

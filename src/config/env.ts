@@ -51,6 +51,23 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().optional().default("mock-secret-key"),
   AWS_S3_BUCKET_NAME: z.string().default("safebite-assets"),
 
+  // SMTP / Transactional Email (Password Reset OTP)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z
+    .string()
+    .default("587")
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => Number.isInteger(val) && val > 0 && val <= 65535, {
+      message: "SMTP_PORT must be a valid TCP port (1-65535)",
+    }),
+  SMTP_SECURE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((val) => val === "true"),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().default("SafeBite <noreply@safebite.local>"),
+
   // AI Providers for RAG
   OPENAI_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),

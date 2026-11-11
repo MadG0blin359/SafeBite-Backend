@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
+import { prisma } from "../config/prisma.js";
 import { AppError } from "../utils/app-error.js";
 import { SafeBiteUserPayload } from "../types/express.d.js";
 
@@ -25,14 +26,25 @@ export const requireAuth = async (
     throw new AppError(401, "Bearer token is empty");
   }
 
+  let decoded: SafeBiteUserPayload;
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as SafeBiteUserPayload;
-    req.user = decoded;
-    req.token = token;
-    next();
+    decoded = jwt.verify(token, env.JWT_SECRET) as SafeBiteUserPayload;
   } catch {
     throw new AppError(401, "Invalid or expired authentication token");
   }
+
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.id },
+    select: { tokenVersion: true },
+  });
+
+  if (!user || (decoded.tokenVersion ?? 0) !== user.tokenVersion) {
+    throw new AppError(401, "Invalid or expired authentication token");
+  }
+
+  req.user = decoded;
+  req.token = token;
+  next();
 };
 
 /**
@@ -70,8 +82,14 @@ export const optionalAuth = async (
     if (token) {
       try {
         const decoded = jwt.verify(token, env.JWT_SECRET) as SafeBiteUserPayload;
-        req.user = decoded;
-        req.token = token;
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: { tokenVersion: true },
+        });
+        if (user && (decoded.tokenVersion ?? 0) === user.tokenVersion) {
+          req.user = decoded;
+          req.token = token;
+        }
       } catch {
         // Intentionally ignore failure in optional auth
       }

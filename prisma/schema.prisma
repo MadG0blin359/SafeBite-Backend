@@ -11,22 +11,41 @@ generator client {
 
 // 1. User & Account Management (FR-14, FR-16)
 model User {
-  id            String          @id @default(uuid())
-  email         String          @unique
-  passwordHash  String
-  fullName      String?
-  role          String          @default("USER") // USER, ADMIN
-  healthConsent Boolean         @default(false)
-  consentDate   DateTime?
-  healthTags    String[]        @default([]) // e.g. ["PREGNANCY", "INFANT", "KIDNEY_ISSUE"]
-  searchHistory SearchHistory[]
-  scanHistory   ScanHistory[]
-  favorites     Favorite[]
-  watchlist     Watchlist[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id             String               @id @default(uuid())
+  email          String               @unique
+  passwordHash   String
+  fullName       String?
+  role           String               @default("USER") // USER, ADMIN
+  tokenVersion   Int                  @default(0)
+  healthConsent  Boolean              @default(false)
+  consentDate    DateTime?
+  healthTags     String[]             @default([]) // e.g. ["PREGNANCY", "INFANT", "KIDNEY_ISSUE"]
+  searchHistory  SearchHistory[]
+  scanHistory    ScanHistory[]
+  favorites      Favorite[]
+  watchlist      Watchlist[]
+  passwordResets PasswordResetToken[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpHash        String?
+  otpAttempts    Int       @default(0)
+  otpVerifiedAt  DateTime?
+  resetTokenHash String?   @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 // 2. Taxonomy & Products (FR-01, FR-02, 3.4.1)

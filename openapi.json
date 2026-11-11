@@ -394,7 +394,7 @@
           }
         }
       },
-      "ResetPasswordRequest": {
+      "ForgotPasswordRequest": {
         "type": "object",
         "required": ["email"],
         "properties": {
@@ -402,6 +402,73 @@
             "type": "string",
             "format": "email",
             "example": "ayesha.khan@example.com"
+          }
+        }
+      },
+      "VerifyResetOtpRequest": {
+        "type": "object",
+        "required": ["email", "otp"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "ayesha.khan@example.com"
+          },
+          "otp": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "minLength": 6,
+            "maxLength": 6,
+            "description": "6-digit verification code sent to the user's email address.",
+            "example": "482913"
+          }
+        }
+      },
+      "VerifyResetOtpResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Verification code confirmed."
+          },
+          "data": {
+            "type": "object",
+            "required": ["resetToken", "expiresInMinutes"],
+            "properties": {
+              "resetToken": {
+                "type": "string",
+                "description": "Single-use reset token valid for completing the password change.",
+                "example": "8c3e1b7f2d0a9e4c1b8f5a6d3e2c7b9a1f4e8d2c6b3a9f7e1d4c8b2a6f9e3d1c"
+              },
+              "expiresInMinutes": {
+                "type": "integer",
+                "example": 10
+              }
+            }
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": ["resetToken", "newPassword"],
+        "properties": {
+          "resetToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Single-use reset token returned by /api/auth/verify-reset-otp.",
+            "example": "8c3e1b7f2d0a9e4c1b8f5a6d3e2c7b9a1f4e8d2c6b3a9f7e1d4c8b2a6f9e3d1c"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "example": "NewSafeBite#2026"
           }
         }
       },
@@ -1634,13 +1701,14 @@
       "post": {
         "operationId": "forgotPassword",
         "tags": ["Auth"],
-        "summary": "Initiate password reset workflow",
+        "summary": "Request a 6-digit password reset OTP code",
+        "description": "Step 1 of the 3-screen password reset workflow (Email -> Enter OTP -> New Password). Generates a single-use 6-digit OTP (15-minute expiry, 30-second resend cooldown) and dispatches it via configured SMTP without leaking whether the email exists.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
               },
               "example": {
                 "email": "ayesha.khan@example.com"
@@ -1658,13 +1726,194 @@
                 },
                 "example": {
                   "success": true,
-                  "message": "If an account exists with that email, instructions have been sent."
+                  "message": "If an account exists with that email, a 6-digit verification code has been sent."
                 }
               }
             }
           },
           "400": {
             "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/AuthRateLimitedError"
+          },
+          "503": {
+            "description": "Email delivery service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Unable to send verification email at this time. Please try again later.",
+                  "statusCode": 503
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify-reset-otp": {
+      "post": {
+        "operationId": "verifyResetOtp",
+        "tags": ["Auth"],
+        "summary": "Verify 6-digit password reset OTP code",
+        "description": "Step 2 of the password reset workflow. Validates the 6-digit OTP (maximum 5 failed attempts per code) and exchanges it for a short-lived single-use reset token (10-minute expiry).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyResetOtpRequest"
+              },
+              "example": {
+                "email": "ayesha.khan@example.com",
+                "otp": "482913"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified and single-use reset token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResetOtpResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Verification code confirmed.",
+                  "data": {
+                    "resetToken": "8c3e1b7f2d0a9e4c1b8f5a6d3e2c7b9a1f4e8d2c6b3a9f7e1d4c8b2a6f9e3d1c",
+                    "expiresInMinutes": 10
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed, OTP is invalid/expired, or maximum verification attempts exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ErrorResponse" },
+                    { "$ref": "#/components/schemas/ValidationErrorResponse" }
+                  ]
+                },
+                "examples": {
+                  "invalidOrExpiredOtp": {
+                    "summary": "Invalid or expired OTP code",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid or expired verification code.",
+                      "statusCode": 400
+                    }
+                  },
+                  "tooManyAttempts": {
+                    "summary": "OTP locked after 5 failed attempts",
+                    "value": {
+                      "success": false,
+                      "message": "Too many failed verification attempts. Please request a new code.",
+                      "statusCode": 400
+                    }
+                  },
+                  "validationError": {
+                    "summary": "Malformed OTP format",
+                    "value": {
+                      "success": false,
+                      "message": "Request validation failed",
+                      "errors": [
+                        {
+                          "field": "otp",
+                          "message": "Verification code must be a 6-digit number"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/AuthRateLimitedError"
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "operationId": "resetPassword",
+        "tags": ["Auth"],
+        "summary": "Complete password reset with verified token",
+        "description": "Step 3 of the password reset workflow. Validates the single-use reset token from /api/auth/verify-reset-otp, updates the bcrypt password hash, consumes the reset session, and revokes all previously issued JWTs.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              },
+              "example": {
+                "resetToken": "8c3e1b7f2d0a9e4c1b8f5a6d3e2c7b9a1f4e8d2c6b3a9f7e1d4c8b2a6f9e3d1c",
+                "newPassword": "NewSafeBite#2026"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated and existing JWT sessions invalidated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOnlyResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Password reset successfully. Please sign in with your new password."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or reset session is invalid, already used, or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ErrorResponse" },
+                    { "$ref": "#/components/schemas/ValidationErrorResponse" }
+                  ]
+                },
+                "examples": {
+                  "invalidResetSession": {
+                    "summary": "Invalid, used, or expired reset token",
+                    "value": {
+                      "success": false,
+                      "message": "Reset session is invalid or has expired. Please start over.",
+                      "statusCode": 400
+                    }
+                  },
+                  "validationError": {
+                    "summary": "Password policy violation",
+                    "value": {
+                      "success": false,
+                      "message": "Request validation failed",
+                      "errors": [
+                        {
+                          "field": "newPassword",
+                          "message": "Password must be at least 6 characters long"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/AuthRateLimitedError"
