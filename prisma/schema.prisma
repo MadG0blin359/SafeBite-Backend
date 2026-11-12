@@ -11,24 +11,42 @@ generator client {
 
 // 1. User & Account Management (FR-14, FR-16)
 model User {
-  id             String               @id @default(uuid())
-  email          String               @unique
-  passwordHash   String
-  fullName       String?
-  role           String               @default("USER") // USER, ADMIN
-  tokenVersion   Int                  @default(0)
-  healthConsent  Boolean              @default(false)
-  consentDate    DateTime?
-  healthTags     String[]             @default([]) // e.g. ["PREGNANCY", "INFANT", "KIDNEY_ISSUE"]
-  searchHistory  SearchHistory[]
-  scanHistory    ScanHistory[]
-  favorites      Favorite[]
-  watchlist      Watchlist[]
-  passwordResets PasswordResetToken[]
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id                 String                   @id @default(uuid())
+  email              String                   @unique
+  passwordHash       String
+  fullName           String?
+  role               String                   @default("USER") // USER, ADMIN
+  tokenVersion       Int                      @default(0)
+  emailVerified      Boolean                  @default(false)
+  emailVerifiedAt    DateTime?
+  healthConsent      Boolean                  @default(false)
+  consentDate        DateTime?
+  healthTags         String[]                 @default([]) // e.g. ["PREGNANCY", "INFANT", "KIDNEY_ISSUE"]
+  searchHistory      SearchHistory[]
+  scanHistory        ScanHistory[]
+  favorites          Favorite[]
+  watchlist          Watchlist[]
+  passwordResets     PasswordResetToken[]
+  emailVerifications EmailVerificationToken[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@map("users")
+}
+
+model EmailVerificationToken {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpHash     String?
+  otpAttempts Int       @default(0)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
 }
 
 model PasswordResetToken {

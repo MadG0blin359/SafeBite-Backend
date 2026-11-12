@@ -51,7 +51,22 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().optional().default("mock-secret-key"),
   AWS_S3_BUCKET_NAME: z.string().default("safebite-assets"),
 
-  // SMTP / Transactional Email (Password Reset OTP)
+  // Email Delivery (Mailtrap Sending API + optional SMTP fallback)
+  MAILTRAP_API_TOKEN: z.string().optional(),
+  MAILTRAP_SANDBOX_ID: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .refine((val) => val === undefined || (Number.isInteger(val) && val > 0), {
+      message: "MAILTRAP_SANDBOX_ID must be a positive integer",
+    }),
+  EMAIL_FROM_ADDRESS: z
+    .string()
+    .trim()
+    .email({ message: "EMAIL_FROM_ADDRESS must be a valid email address" })
+    .default("noreply@safebite.live"),
+  EMAIL_FROM_NAME: z.string().trim().min(1).default("SafeBite"),
+
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z
     .string()
@@ -66,7 +81,7 @@ const envSchema = z.object({
     .transform((val) => val === "true"),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().default("SafeBite <noreply@safebite.local>"),
+  SMTP_FROM: z.string().default("SafeBite <noreply@safebite.live>"),
 
   // AI Providers for RAG
   OPENAI_API_KEY: z.string().optional(),

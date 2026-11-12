@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { inspectEmailInput } from "../utils/email-validation.js";
 
 /**
  * Strict Name Validation Policy (GR-S-01):
@@ -16,9 +17,38 @@ const strictNameRegex = /^[\p{L}]+(?:[' -][\p{L}]+)*$/u;
 
 const emailSchema = z
   .string({ required_error: "Email address is required" })
+  .superRefine((val, ctx) => {
+    const inspection = inspectEmailInput(val);
+    if (!inspection.validSyntax) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: inspection.reason || "Invalid email address",
+      });
+    }
+  })
+  .transform((val) => val.trim().toLowerCase());
+
+const signupEmailSchema = emailSchema.superRefine((normalizedEmail, ctx) => {
+  const inspection = inspectEmailInput(normalizedEmail);
+  if (inspection.suggestion) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Domain '${inspection.domain}' looks like a typo. Did you mean '${inspection.suggestion}'?`,
+    });
+    return;
+  }
+  if (inspection.isDisposable) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Disposable email addresses cannot be used for account registration",
+    });
+  }
+});
+
+const otpCodeSchema = z
+  .string({ required_error: "Verification code is required" })
   .trim()
-  .toLowerCase()
-  .email({ message: "Invalid email address" });
+  .regex(/^\d{6}$/, { message: "Verification code must be a 6-digit number" });
 
 const passwordPolicySchema = z
   .string({ required_error: "Password is required" })
@@ -51,10 +81,25 @@ export const fullNameSchema = z
     }
   );
 
+export const validateEmailInputSchema = z.object({
+  email: z
+    .string({ required_error: "Email address is required" })
+    .max(320, { message: "Email address cannot exceed 320 characters" }),
+});
+
 export const signUpSchema = z.object({
-  email: emailSchema,
+  email: signupEmailSchema,
   password: passwordPolicySchema,
   fullName: fullNameSchema.optional(),
+});
+
+export const verifyEmailSchema = z.object({
+  email: emailSchema,
+  otp: otpCodeSchema,
+});
+
+export const resendVerificationSchema = z.object({
+  email: emailSchema,
 });
 
 export const signInSchema = z.object({
@@ -75,10 +120,7 @@ export const forgotPasswordSchema = z.object({
 
 export const verifyResetOtpSchema = z.object({
   email: emailSchema,
-  otp: z
-    .string({ required_error: "Verification code is required" })
-    .trim()
-    .regex(/^\d{6}$/, { message: "Verification code must be a 6-digit number" }),
+  otp: otpCodeSchema,
 });
 
 export const resetPasswordSchema = z.object({
@@ -90,7 +132,10 @@ export const resetPasswordSchema = z.object({
   newPassword: passwordPolicySchema,
 });
 
+export type ValidateEmailInput = z.infer<typeof validateEmailInputSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

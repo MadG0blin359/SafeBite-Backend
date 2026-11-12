@@ -1,15 +1,41 @@
 import { Request, Response } from "express";
 import { authService } from "../services/auth.service.js";
+import { verifyEmailInputDeliverability } from "../utils/email-validation.js";
+
+export const validateEmailInput = async (req: Request, res: Response): Promise<void> => {
+  const result = await verifyEmailInputDeliverability(req.body.email);
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+};
 
 export const signUp = async (req: Request, res: Response): Promise<void> => {
   const data = await authService.signUp(req.body);
   res.status(201).json({
     success: true,
-    message: "User registered successfully",
+    message: "Account created. Please check your email for the 6-digit verification code.",
+    data,
+  });
+};
+
+export const verifyEmailOtp = async (req: Request, res: Response): Promise<void> => {
+  const data = await authService.verifyEmailOtp(req.body);
+  res.status(200).json({
+    success: true,
+    message: "Email verified successfully. Account is now active.",
     data: {
       user: data.user,
       token: data.token,
     },
+  });
+};
+
+export const resendVerificationOtp = async (req: Request, res: Response): Promise<void> => {
+  await authService.resendVerificationOtp(req.body.email);
+  res.status(200).json({
+    success: true,
+    message: "If an unverified account exists with that email, a 6-digit verification code has been sent.",
   });
 };
 

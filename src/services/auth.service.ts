@@ -7,6 +7,7 @@ import { AppError } from "../utils/app-error.js";
 import { emailService } from "./email.service.js";
 import {
   SignUpInput,
+  VerifyEmailInput,
   SignInInput,
   UpdateProfileInput,
   VerifyResetOtpInput,
@@ -19,7 +20,20 @@ const RESET_TOKEN_TTL_MS = 10 * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 
-function hashResetSecret(secret: string): string {
+const USER_PUBLIC_SELECT = {
+  id: true,
+  email: true,
+  fullName: true,
+  role: true,
+  emailVerified: true,
+  emailVerifiedAt: true,
+  healthConsent: true,
+  consentDate: true,
+  healthTags: true,
+  createdAt: true,
+} as const;
+
+function hashSecret(secret: string): string {
   return crypto.createHmac("sha256", env.JWT_SECRET).update(secret).digest("hex");
 }
 
@@ -31,59 +45,330 @@ function safeCompareHex(a: string, b: string): boolean {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+function issueAuthJwt(user: {
+  id: string;
+  email: string;
+  role: string;
+  healthConsent: boolean;
+  tokenVersion: number;
+}): string {
+  // Decoupled: Stateless JWT contains strictly identity & authorization claims (SEC-001)
+  return jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      healthConsent: user.healthConsent,
+      tokenVersion: user.tokenVersion,
+    },
+    env.JWT_SECRET,
+    { expiresIn: env.JWT_EXPIRES_IN as any }
+  );
+}
+
 export const authService = {
   /**
-   * Register a new user with salted password hash (NFR-S-02).
+   * Register a new user (or refresh a pending unverified registration) and send a 6-digit email confirmation OTP.
    */
   async signUp(input: SignUpInput) {
+    const normalizedEmail = input.email.toLowerCase();
+    const normalizedFullName = input.fullName ? input.fullName.trim().normalize("NFC") : undefined;
+
     const existing = await prisma.user.findUnique({
-      where: { email: input.email.toLowerCase() },
+      where: { email: normalizedEmail },
+      select: { id: true, emailVerified: true },
     });
 
-    if (existing) {
+    if (existing && existing.emailVerified) {
       throw new AppError(409, "An account with this email already exists");
     }
 
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+    const expiresInMinutes = Math.round(OTP_TTL_MS / 60_000);
 
-    const createdUser = await prisma.user.create({
-      data: {
-        email: input.email.toLowerCase(),
-        passwordHash,
-        fullName: input.fullName ? input.fullName.trim().normalize("NFC") : undefined,
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        tokenVersion: true,
-        healthConsent: true,
-        healthTags: true,
-        createdAt: true,
-      },
+    if (existing && !existing.emailVerified) {
+      const recentToken = await prisma.emailVerificationToken.findFirst({
+        where: {
+          userId: existing.id,
+          usedAt: null,
+          createdAt: { gt: new Date(Date.now() - OTP_RESEND_COOLDOWN_MS) },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const updatedUser = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          passwordHash,
+          fullName: normalizedFullName ?? null,
+        },
+        select: USER_PUBLIC_SELECT,
+      });
+
+      if (recentToken) {
+        return {
+          user: updatedUser,
+          requiresEmailVerification: true,
+          expiresInMinutes,
+        };
+      }
+
+      const otp = crypto.randomInt(100_000, 1_000_000).toString();
+      const otpHash = hashSecret(otp);
+      const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+      const createdToken = await prisma.$transaction(async (tx) => {
+        await tx.emailVerificationToken.updateMany({
+          where: { userId: existing.id, usedAt: null },
+          data: { usedAt: new Date(), otpHash: null },
+        });
+
+        return tx.emailVerificationToken.create({
+          data: {
+            userId: existing.id,
+            otpHash,
+            expiresAt,
+          },
+          select: { id: true },
+        });
+      });
+
+      try {
+        await emailService.sendAccountVerificationOtp({
+          to: updatedUser.email,
+          fullName: updatedUser.fullName,
+          otp,
+          expiresInMinutes,
+        });
+      } catch (error) {
+        await prisma.emailVerificationToken
+          .update({
+            where: { id: createdToken.id },
+            data: { usedAt: new Date(), otpHash: null },
+          })
+          .catch(() => undefined);
+        throw error;
+      }
+
+      return {
+        user: updatedUser,
+        requiresEmailVerification: true,
+        expiresInMinutes,
+      };
+    }
+
+    const otp = crypto.randomInt(100_000, 1_000_000).toString();
+    const otpHash = hashSecret(otp);
+    const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+    const { user, verificationTokenId } = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          passwordHash,
+          fullName: normalizedFullName,
+          emailVerified: false,
+        },
+        select: USER_PUBLIC_SELECT,
+      });
+
+      const createdToken = await tx.emailVerificationToken.create({
+        data: {
+          userId: createdUser.id,
+          otpHash,
+          expiresAt,
+        },
+        select: { id: true },
+      });
+
+      return { user: createdUser, verificationTokenId: createdToken.id };
     });
 
-    const { tokenVersion, ...user } = createdUser;
+    try {
+      await emailService.sendAccountVerificationOtp({
+        to: user.email,
+        fullName: user.fullName,
+        otp,
+        expiresInMinutes,
+      });
+    } catch (error) {
+      await prisma.emailVerificationToken
+        .update({
+          where: { id: verificationTokenId },
+          data: { usedAt: new Date(), otpHash: null },
+        })
+        .catch(() => undefined);
+      throw error;
+    }
 
-    // Decoupled: Stateless JWT contains strictly identity & authorization claims (SEC-001)
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        healthConsent: user.healthConsent,
-        tokenVersion,
-      },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN as any }
-    );
-
-    return { user, token };
+    return {
+      user,
+      requiresEmailVerification: true,
+      expiresInMinutes,
+    };
   },
 
   /**
-   * Log in user using email and password.
+   * Confirm newly registered user's email with the 6-digit OTP and issue their 90-day JWT session.
+   */
+  async verifyEmailOtp(input: VerifyEmailInput) {
+    const now = new Date();
+    const user = await prisma.user.findUnique({
+      where: { email: input.email.toLowerCase() },
+      select: {
+        id: true,
+        emailVerified: true,
+      },
+    });
+
+    if (!user) {
+      throw new AppError(400, "Invalid or expired verification code.");
+    }
+
+    if (user.emailVerified) {
+      throw new AppError(400, "Email address is already verified. Please sign in.");
+    }
+
+    const record = await prisma.emailVerificationToken.findFirst({
+      where: {
+        userId: user.id,
+        usedAt: null,
+        otpHash: { not: null },
+        expiresAt: { gt: now },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!record || !record.otpHash) {
+      throw new AppError(400, "Invalid or expired verification code.");
+    }
+
+    const candidateHash = hashSecret(input.otp.trim());
+    const isMatch = safeCompareHex(candidateHash, record.otpHash);
+
+    if (!isMatch) {
+      const nextAttempts = record.otpAttempts + 1;
+      if (nextAttempts >= MAX_OTP_ATTEMPTS) {
+        await prisma.emailVerificationToken.update({
+          where: { id: record.id },
+          data: { otpAttempts: nextAttempts, usedAt: now, otpHash: null },
+        });
+        throw new AppError(400, "Too many failed verification attempts. Please request a new code.");
+      }
+
+      await prisma.emailVerificationToken.update({
+        where: { id: record.id },
+        data: { otpAttempts: { increment: 1 } },
+      });
+      throw new AppError(400, "Invalid or expired verification code.");
+    }
+
+    const verifiedRecord = await prisma.$transaction(async (tx) => {
+      const consumed = await tx.emailVerificationToken.updateMany({
+        where: {
+          id: record.id,
+          usedAt: null,
+        },
+        data: {
+          usedAt: now,
+          otpHash: null,
+        },
+      });
+
+      if (consumed.count === 0) {
+        throw new AppError(400, "Invalid or expired verification code.");
+      }
+
+      await tx.emailVerificationToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: now, otpHash: null },
+      });
+
+      return tx.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: true,
+          emailVerifiedAt: now,
+        },
+        select: {
+          ...USER_PUBLIC_SELECT,
+          tokenVersion: true,
+        },
+      });
+    });
+
+    const { tokenVersion, ...verifiedUser } = verifiedRecord;
+    const token = issueAuthJwt({ ...verifiedUser, tokenVersion });
+
+    return { user: verifiedUser, token };
+  },
+
+  /**
+   * Resend account confirmation OTP for unverified accounts without leaking account existence.
+   */
+  async resendVerificationOtp(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, email: true, fullName: true, emailVerified: true },
+    });
+
+    if (!user || user.emailVerified) {
+      return;
+    }
+
+    const recentToken = await prisma.emailVerificationToken.findFirst({
+      where: {
+        userId: user.id,
+        usedAt: null,
+        createdAt: { gt: new Date(Date.now() - OTP_RESEND_COOLDOWN_MS) },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (recentToken) {
+      return;
+    }
+
+    const otp = crypto.randomInt(100_000, 1_000_000).toString();
+    const otpHash = hashSecret(otp);
+    const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+    const createdRecord = await prisma.$transaction(async (tx) => {
+      await tx.emailVerificationToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: new Date(), otpHash: null },
+      });
+
+      return tx.emailVerificationToken.create({
+        data: {
+          userId: user.id,
+          otpHash,
+          expiresAt,
+        },
+        select: { id: true },
+      });
+    });
+
+    try {
+      await emailService.sendAccountVerificationOtp({
+        to: user.email,
+        fullName: user.fullName,
+        otp,
+        expiresInMinutes: Math.round(OTP_TTL_MS / 60_000),
+      });
+    } catch (error) {
+      await prisma.emailVerificationToken
+        .update({
+          where: { id: createdRecord.id },
+          data: { usedAt: new Date(), otpHash: null },
+        })
+        .catch(() => undefined);
+      throw error;
+    }
+  },
+
+  /**
+   * Log in user using email and password after confirming verified email ownership.
    */
   async signIn(input: SignInInput) {
     const user = await prisma.user.findUnique({
@@ -100,25 +385,30 @@ export const authService = {
       throw new AppError(401, "Invalid email or password");
     }
 
-    // Decoupled: Stateless JWT contains strictly identity & authorization claims (SEC-001)
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        healthConsent: user.healthConsent,
-        tokenVersion: user.tokenVersion,
-      },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN as any }
-    );
+    if (!user.emailVerified) {
+      throw new AppError(
+        403,
+        "Email address not verified. Please confirm your account using the 6-digit verification code sent to your email."
+      );
+    }
+
+    const token = issueAuthJwt({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      healthConsent: user.healthConsent,
+      tokenVersion: user.tokenVersion,
+    });
 
     const userProfile = {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
       role: user.role,
+      emailVerified: user.emailVerified,
+      emailVerifiedAt: user.emailVerifiedAt,
       healthConsent: user.healthConsent,
+      consentDate: user.consentDate,
       healthTags: user.healthTags,
       createdAt: user.createdAt,
     };
@@ -132,16 +422,7 @@ export const authService = {
   async getProfile(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        healthConsent: true,
-        consentDate: true,
-        healthTags: true,
-        createdAt: true,
-      },
+      select: USER_PUBLIC_SELECT,
     });
 
     if (!user) {
@@ -161,14 +442,7 @@ export const authService = {
         fullName: input.fullName ? input.fullName.trim().normalize("NFC") : undefined,
       },
       select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        healthConsent: true,
-        consentDate: true,
-        healthTags: true,
-        createdAt: true,
+        ...USER_PUBLIC_SELECT,
         updatedAt: true,
       },
     });
@@ -204,7 +478,7 @@ export const authService = {
     }
 
     const otp = crypto.randomInt(100_000, 1_000_000).toString();
-    const otpHash = hashResetSecret(otp);
+    const otpHash = hashSecret(otp);
     const expiresAt = new Date(Date.now() + OTP_TTL_MS);
 
     const createdRecord = await prisma.$transaction(async (tx) => {
@@ -270,7 +544,7 @@ export const authService = {
       throw new AppError(400, "Invalid or expired verification code.");
     }
 
-    const candidateHash = hashResetSecret(input.otp.trim());
+    const candidateHash = hashSecret(input.otp.trim());
     const isMatch = safeCompareHex(candidateHash, record.otpHash);
 
     if (!isMatch) {
@@ -291,7 +565,7 @@ export const authService = {
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenHash = hashResetSecret(resetToken);
+    const resetTokenHash = hashSecret(resetToken);
     const resetExpiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
 
     const updated = await prisma.passwordResetToken.updateMany({
@@ -323,7 +597,7 @@ export const authService = {
    */
   async completePasswordReset(input: ResetPasswordInput): Promise<void> {
     const now = new Date();
-    const resetTokenHash = hashResetSecret(input.resetToken.trim());
+    const resetTokenHash = hashSecret(input.resetToken.trim());
 
     const record = await prisma.passwordResetToken.findUnique({
       where: { resetTokenHash },
@@ -356,11 +630,18 @@ export const authService = {
         data: { usedAt: now, otpHash: null, resetTokenHash: null },
       });
 
+      const currentUser = await tx.user.findUnique({
+        where: { id: record.userId },
+        select: { emailVerifiedAt: true },
+      });
+
       await tx.user.update({
         where: { id: record.userId },
         data: {
           passwordHash: newPasswordHash,
           tokenVersion: { increment: 1 },
+          emailVerified: true,
+          emailVerifiedAt: currentUser?.emailVerifiedAt ?? now,
         },
       });
     });

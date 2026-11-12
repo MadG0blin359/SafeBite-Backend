@@ -1,6 +1,9 @@
 import { Router } from "express";
 import {
+  validateEmailInput,
   signUp,
+  verifyEmailOtp,
+  resendVerificationOtp,
   signIn,
   getProfile,
   updateProfile,
@@ -13,7 +16,10 @@ import { requireAuth } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { authRateLimiter } from "../middlewares/rate-limit.middleware.js";
 import {
+  validateEmailInputSchema,
   signUpSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
   signInSchema,
   updateProfileSchema,
   forgotPasswordSchema,
@@ -26,7 +32,10 @@ const router = Router();
 // Apply auth rate limiter
 router.use(authRateLimiter);
 
+router.post("/validate-email", validate({ body: validateEmailInputSchema }), validateEmailInput);
 router.post("/signup", validate({ body: signUpSchema }), signUp);
+router.post("/verify-email", validate({ body: verifyEmailSchema }), verifyEmailOtp);
+router.post("/resend-verification-otp", validate({ body: resendVerificationSchema }), resendVerificationOtp);
 router.post("/login", validate({ body: signInSchema }), signIn);
 router.post("/forgot-password", validate({ body: forgotPasswordSchema }), forgotPassword);
 router.post("/verify-reset-otp", validate({ body: verifyResetOtpSchema }), verifyResetOtp);
