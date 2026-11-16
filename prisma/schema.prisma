@@ -81,7 +81,8 @@ model Category {
 
 model Product {
   id              String           @id @default(uuid())
-  barcode         String?          @unique // EAN-13 or UPC-A
+  productCode     String?          @unique // e.g. "S1", "CS3", "N2", "JU9" from research papers
+  barcode         String?          @unique // Primary EAN-13 or UPC-A
   name            String
   brand           String
   categoryId      String
@@ -89,6 +90,7 @@ model Product {
   imageUrl        String?
   packageSize     String?
   matrix          String?          // Liquid, powder, solid, etc.
+  barcodes        ProductBarcode[]
   researchData    ResearchData[]
   analysisResults AnalysisResult[]
   favorites       Favorite[]
@@ -97,10 +99,25 @@ model Product {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  @@index([barcode])
   @@index([name])
   @@index([brand])
+  @@index([categoryId])
   @@map("products")
+}
+
+model ProductBarcode {
+  id          String   @id @default(uuid())
+  barcode     String   @unique
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  format      String?  // "EAN_13", "UPC_A"
+  productName String?  // Specific retail SKU name in Open Food Facts
+  packaging   String?  // e.g. "85 g", "Packet"
+  sourceUrl   String?  // OFF URL
+  createdAt   DateTime @default(now())
+
+  @@index([productId])
+  @@map("product_barcodes")
 }
 
 // 3. Research Evidence & Heavy Metal Observations (FR-03, FR-10, 3.4.2, 3.4.4)
@@ -119,18 +136,19 @@ enum EvidenceLevel {
 }
 
 model ResearchSource {
-  id              String         @id @default(uuid())
-  title           String
-  authors         String
-  publicationYear Int
-  journal         String?
-  location        String?        // e.g. Lahore, Faisalabad, Karachi
-  sampleSize      Int?
-  methodology     String?        // e.g. ICP-OES, AAS
-  doi             String?
-  url             String?
-  researchData    ResearchData[]
-  createdAt       DateTime       @default(now())
+  id               String         @id @default(uuid())
+  externalSourceId Int?           @unique // e.g. 1..38 from research literature
+  title            String
+  authors          String
+  publicationYear  Int
+  journal          String?
+  location         String?        // e.g. Lahore, Faisalabad, Karachi
+  sampleSize       Int?
+  methodology      String?        // e.g. ICP-OES, AAS
+  doi              String?
+  url              String?
+  researchData     ResearchData[]
+  createdAt        DateTime       @default(now())
 
   @@map("research_sources")
 }
@@ -149,12 +167,17 @@ model ResearchData {
   evidenceLevel     EvidenceLevel
   measurementStatus String          // MEASURED, NOT_TESTED, BELOW_LOD, RANGE_VALUE
   rawLOD            Float?          // Limit of Detection
+  sd                Float?          // Standard deviation (e.g. 35.06 ± 0.57)
+  qualifier         String?         // "detected", "ND", "range_max"
+  flag              String?         // Data quality / conversion lineage flag
   sourceId          String
   source            ResearchSource  @relation(fields: [sourceId], references: [id])
   createdAt         DateTime        @default(now())
 
   @@index([contaminant])
   @@index([evidenceLevel])
+  @@index([productId, contaminant])
+  @@index([categoryId, contaminant])
   @@map("research_data")
 }
 
@@ -172,24 +195,26 @@ enum ReferenceRole {
 }
 
 model ReferenceStandard {
-  id            String            @id @default(uuid())
-  authority     StandardAuthority
-  standardCode  String            // e.g. "PS: 5344-2022", "CXS 193-1995"
-  version       String
-  contaminant   ContaminantType
-  categoryId    String
-  category      Category          @relation(fields: [categoryId], references: [id])
-  productMatrix String?           // e.g. "Packaged liquid milk"
-  limitValue    Float
-  unit          String            // mg/kg, ppm
-  basis         String            // wet_mass, dry_mass
-  referenceRole ReferenceRole
-  notes         String?
-  sourceUrl     String?
-  effectiveDate DateTime?
-  createdAt     DateTime          @default(now())
+  id               String            @id @default(uuid())
+  externalRecordId String?           @unique // e.g. "RL-0001" from PSQCA dataset or deterministic key
+  authority        StandardAuthority
+  standardCode     String            // e.g. "PS 2102-2010", "PS CXS 193", "EU 2023/915"
+  version          String
+  contaminant      ContaminantType
+  categoryId       String
+  category         Category          @relation(fields: [categoryId], references: [id])
+  productMatrix    String?           // e.g. "Packaged Liquid Milk", "Edible Sesame Seed Oil (Virgin Oil)"
+  limitValue       Float
+  unit             String            // mg/kg, ppm, mg/L
+  basis            String            // wet_mass, dry_mass, mass, volume
+  referenceRole    ReferenceRole
+  notes            String?
+  sourceUrl        String?
+  effectiveDate    DateTime?
+  createdAt        DateTime          @default(now())
 
-  @@unique([authority, standardCode, contaminant, categoryId, productMatrix])
+  @@index([categoryId, contaminant, authority, referenceRole])
+  @@index([standardCode])
   @@map("reference_standards")
 }
 
@@ -212,7 +237,7 @@ model AnalysisResult {
   excludedReasons    Json             // Map of contaminant -> reasonCode
   calculatedAt       DateTime         @default(now())
 
-  @@index([productId, ruleVersion])
+  @@unique([productId, ruleVersion])
   @@map("analysis_results")
 }
 

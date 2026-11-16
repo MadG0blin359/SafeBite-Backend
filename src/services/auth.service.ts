@@ -646,6 +646,16 @@ export const authService = {
       });
     });
   },
+
+  /**
+   * Revoke active JWTs on logout by incrementing user's token version.
+   */
+  async signOut(userId: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { tokenVersion: { increment: 1 } },
+    });
+  },
 };
 
 export default authService;

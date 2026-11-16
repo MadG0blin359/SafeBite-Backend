@@ -50,8 +50,8 @@ export const scoringService = {
         continue;
       }
 
-      // Check if product-specific
-      if (res.evidenceLevel !== "PRODUCT_SPECIFIC") {
+      // Check if product-specific or brand-level evidence
+      if (res.evidenceLevel !== "PRODUCT_SPECIFIC" && res.evidenceLevel !== "BRAND_LEVEL") {
         ineligibleCount++;
         excludedReasons[res.contaminant] = ReasonCodes.NOT_PRODUCT_SPECIFIC;
         continue;
@@ -77,7 +77,39 @@ export const scoringService = {
     const hasPriorityMetal = includedContaminants.some((c) => c === "LEAD" || c === "CADMIUM");
     const isEligible = eligibleCount >= 2 && hasPriorityMetal;
 
+    // Food Safety Override: Check if ANY tested contaminant violates legal limits (CLR > 1.0)
+    let violatingClr: ClrCalculationResult | null = null;
+    for (const r of clrResults) {
+      if (r.clr !== null && r.clr > 1.0) {
+        if (!violatingClr || r.clr > (violatingClr.clr || 0)) {
+          violatingClr = r;
+        }
+      }
+    }
+
     if (!isEligible) {
+      // If a legal regulatory limit is breached, food safety requires alerting the consumer
+      if (violatingClr) {
+        return {
+          ruleVersion: ACTIVE_RULE_VERSION,
+          isGradeEligible: true,
+          overallStatusText: StatusCatalogue.ST_04_ABOVE_LIMIT,
+          overallReasonCode: null,
+          grade: "F",
+          cci: violatingClr.clr,
+          maxClr: violatingClr.clr,
+          highestContaminant: violatingClr.contaminant,
+          testedCount,
+          eligibleCount,
+          missingCount,
+          ineligibleCount,
+          clrBreakdown: clrResults,
+          includedContaminants: [violatingClr.contaminant],
+          excludedReasons,
+          calculatedAt: new Date().toISOString(),
+        };
+      }
+
       const reason =
         eligibleCount === 0 && testedCount === 0
           ? ReasonCodes.NO_RESEARCH_RECORD

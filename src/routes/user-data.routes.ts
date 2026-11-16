@@ -23,6 +23,7 @@ import {
   healthConsentSchema,
   healthTagsSchema,
   productIdParamSchema,
+  historyQuerySchema,
 } from "../validators/user-data.validator.js";
 
 const router = Router();
@@ -31,7 +32,7 @@ const router = Router();
 router.use(requireAuth);
 
 // ─── History Routes (FR-12, NFR-PR-02) ────────────────────────────────
-router.get("/history", getHistory);
+router.get("/history", validate({ query: historyQuerySchema }), getHistory);
 router.post("/history/scan", validate({ body: recordScanSchema }), recordScan);
 router.post("/history/search", validate({ body: recordSearchSchema }), recordSearch);
 router.delete("/history", clearHistory);

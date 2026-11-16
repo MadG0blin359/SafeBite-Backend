@@ -5,6 +5,12 @@ import {
   ReasonCodes,
 } from "../constants/status.constants.js";
 
+export const AlternativeStatus = {
+  AVAILABLE: "Available",
+  INSUFFICIENT_DATA: StatusCatalogue.ST_08_INSUFFICIENT_DATA,
+  PRODUCT_NOT_FOUND: StatusCatalogue.ST_09_PRODUCT_NOT_FOUND,
+} as const;
+
 export interface AlternativeRecommendation {
   productId: string;
   productName: string;
@@ -64,7 +70,10 @@ export const alternativeService = {
           some: {
             ruleVersion: ACTIVE_RULE_VERSION,
             gradeEligible: true,
-            cci: { not: null },
+            OR: [
+              { cci: { not: null } },
+              { grade: { not: null } },
+            ],
           },
         },
       },
@@ -81,13 +90,15 @@ export const alternativeService = {
       return {
         sourceProductId: productId,
         categoryName: product.category.name,
-        status: StatusCatalogue.ST_08_INSUFFICIENT_DATA,
+        status: AlternativeStatus.INSUFFICIENT_DATA,
         reasonCode: ReasonCodes.NO_COMPARABLE_RESULTS,
         alternatives: [],
       };
     }
 
-    // Rank candidates by lowest CCI, then lowest maxClr
+    const gradeRank: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, F: 5 };
+
+    // Rank candidates by grade (A -> D), lowest CCI, then lowest maxClr
     const ranked = candidateProducts
       .map((p) => {
         const ar = p.analysisResults[0];
@@ -103,23 +114,44 @@ export const alternativeService = {
         };
       })
       .sort((a, b) => {
+        const aGrade = a.grade ? (gradeRank[a.grade] ?? 99) : 99;
+        const bGrade = b.grade ? (gradeRank[b.grade] ?? 99) : 99;
+        if (aGrade !== bGrade) {
+          return aGrade - bGrade;
+        }
         if ((a.cci ?? 999) !== (b.cci ?? 999)) {
           return (a.cci ?? 999) - (b.cci ?? 999);
         }
         return (a.maxClr ?? 999) - (b.maxClr ?? 999);
       });
 
-    // Filter to those that have lower or equal CCI compared to current product (if current has CCI)
+    // Filter to those that are safer than the current product
     const currentCci = currentAnalysis?.cci ?? null;
-    const saferCandidates = currentCci !== null
-      ? ranked.filter((r) => r.cci !== null && r.cci < currentCci)
-      : ranked;
+    const currentGrade = currentAnalysis?.grade ?? null;
+    const currentGradeRank = currentGrade ? (gradeRank[currentGrade] ?? 99) : 99;
+
+    const saferCandidates = ranked.filter((cand) => {
+      const candGradeRank = cand.grade ? (gradeRank[cand.grade] ?? 99) : 99;
+      // Do not recommend Grade F products as a safer alternative unless current is also F and cand has strictly lower contamination
+      if (currentGradeRank < 5 && candGradeRank >= 5) {
+        return false;
+      }
+      if (currentCci !== null && cand.cci !== null) {
+        return cand.cci < currentCci;
+      }
+      if (currentGradeRank !== 99 && candGradeRank < currentGradeRank) {
+        return true;
+      }
+      return candGradeRank < 5;
+    });
 
     const alternatives: AlternativeRecommendation[] = saferCandidates.slice(0, 5).map((cand) => {
-      let comparisonNote = `Reported lower contamination (CCI: ${cand.cci})`;
-      if (currentCci !== null && cand.cci !== null) {
+      let comparisonNote = `Reported lower contamination (CCI: ${cand.cci ?? "N/A"})`;
+      if (currentCci !== null && cand.cci !== null && currentCci > 0) {
         const diff = ((currentCci - cand.cci) / currentCci * 100).toFixed(0);
         comparisonNote = `Shows ~${diff}% lower Cumulative Contamination Index than scanned item.`;
+      } else if (cand.grade && currentGrade && cand.grade !== currentGrade) {
+        comparisonNote = `Awarded Safety Grade ${cand.grade} compared to scanned product Grade ${currentGrade}.`;
       }
 
       return {
@@ -138,7 +170,7 @@ export const alternativeService = {
       return {
         sourceProductId: productId,
         categoryName: product.category.name,
-        status: StatusCatalogue.ST_08_INSUFFICIENT_DATA,
+        status: AlternativeStatus.INSUFFICIENT_DATA,
         reasonCode: ReasonCodes.NO_COMPARABLE_RESULTS,
         alternatives: [],
       };
@@ -147,7 +179,7 @@ export const alternativeService = {
     return {
       sourceProductId: productId,
       categoryName: product.category.name,
-      status: "Success",
+      status: AlternativeStatus.AVAILABLE,
       reasonCode: null,
       alternatives,
     };

@@ -4,7 +4,8 @@ import { userDataService } from "../services/user-data.service.js";
 // ─── History ──────────────────────────────────────────────────────────
 
 export const getHistory = async (req: Request, res: Response): Promise<void> => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+  const query = (req.validatedQuery as { limit?: number }) || req.query;
+  const limit = query?.limit ? Number(query.limit) : 20;
   const history = await userDataService.getHistory(req.user!.id, limit);
   res.status(200).json({
     success: true,

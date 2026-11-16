@@ -61,18 +61,83 @@ export interface ClrCalculationResult {
 }
 
 /**
- * Normalizes units to mg/kg (ppm) for mathematical comparability.
+ * Checks whether measurement basis and standard basis are mathematically comparable.
+ * - "volume" only compares with "volume"
+ * - Generic "mass" on a mass standard compares compatibly with "mass", "wet_mass", or "dry_mass"
+ * - Explicit "wet_mass" vs "dry_mass" rejects comparison as BASIS_MISMATCH
+ */
+function areBasesComparable(measurementBasis?: string | null, referenceBasis?: string | null): boolean {
+  if (!measurementBasis || !referenceBasis) {
+    return true;
+  }
+
+  const m = measurementBasis.toLowerCase().trim();
+  const r = referenceBasis.toLowerCase().trim();
+
+  if (m === r) {
+    return true;
+  }
+
+  // Cross-domain comparability:
+  // For aqueous liquid foods (milk, juices, beverages), 1 L ≈ 1 kg at standard aqueous density (1.0 kg/L).
+  // Thus volume basis (mg/L) and mass/wet_mass basis (mg/kg, ppm) are mathematically comparable.
+  if (
+    (m === "volume" && (r === "mass" || r === "wet_mass")) ||
+    (r === "volume" && (m === "mass" || m === "wet_mass"))
+  ) {
+    return true;
+  }
+
+  if (m === "volume" || r === "volume") {
+    return false; // Incompatible with dry_mass
+  }
+
+  if (m === "mass" || r === "mass") {
+    return (
+      (m === "mass" || m === "wet_mass" || m === "dry_mass") &&
+      (r === "mass" || r === "wet_mass" || r === "dry_mass")
+    );
+  }
+
+  return false;
+}
+
+/**
+ * Checks unit domain compatibility (mass units vs volume units) when explicit basis is absent.
+ */
+function getUnitDomain(unit: string): "mass" | "volume" | "unknown" {
+  const u = unit.toLowerCase().trim();
+  if (u === "mg/l" || u === "ug/l" || u === "µg/l" || u === "μg/l") return "volume";
+  if (u === "mg/kg" || u === "ppm" || u === "ug/kg" || u === "µg/kg" || u === "μg/kg" || u === "ppb" || u === "g/kg" || u === "%") {
+    return "mass";
+  }
+  return "unknown";
+}
+
+/**
+ * Normalizes units to mg/kg (or mg/L for volume) for mathematical comparability.
  */
 function normalizeConcentrationToMgKg(val: number, unit: string): number | null {
   const normalizedUnit = unit.toLowerCase().trim();
   if (normalizedUnit === "mg/kg" || normalizedUnit === "ppm" || normalizedUnit === "mg/l") {
     return val;
   }
-  if (normalizedUnit === "ug/kg" || normalizedUnit === "ppb" || normalizedUnit === "ug/l" || normalizedUnit === "µg/kg") {
+  if (
+    normalizedUnit === "ug/kg" ||
+    normalizedUnit === "ppb" ||
+    normalizedUnit === "ug/l" ||
+    normalizedUnit === "µg/kg" ||
+    normalizedUnit === "μg/kg" ||
+    normalizedUnit === "µg/l" ||
+    normalizedUnit === "μg/l"
+  ) {
     return val / 1000.0;
   }
-  if (normalizedUnit === "g/kg" || normalizedUnit === "%") {
+  if (normalizedUnit === "g/kg") {
     return val * 1000.0;
+  }
+  if (normalizedUnit === "%") {
+    return val * 10000.0;
   }
   return null; // Incompatible unit
 }
@@ -176,11 +241,22 @@ export const clrService = {
       };
     }
 
-    // Comparability check: Unit matching
+    // Comparability check: Unit matching & domain check (mass vs volume)
     const normConc = measurement.unit ? normalizeConcentrationToMgKg(measurement.concentration, measurement.unit) : null;
     const normLimit = primaryRef.unit ? normalizeConcentrationToMgKg(primaryRef.limitValue, primaryRef.unit) : null;
+    const measDomain = measurement.unit ? getUnitDomain(measurement.unit) : "unknown";
+    const limitDomain = primaryRef.unit ? getUnitDomain(primaryRef.unit) : "unknown";
 
-    if (normConc === null || normLimit === null) {
+    const isDomainCompatible =
+      measDomain === "unknown" ||
+      limitDomain === "unknown" ||
+      measDomain === limitDomain ||
+      // Aqueous liquid equivalence: volume (mg/L) is comparable to mass (mg/kg, ppm) for non-dry limits
+      ((measDomain === "volume" || limitDomain === "volume") &&
+        primaryRef.basis !== "dry_mass" &&
+        measurement.basis !== "dry_mass");
+
+    if (normConc === null || normLimit === null || !isDomainCompatible) {
       return {
         contaminant,
         contaminantName,
@@ -199,12 +275,8 @@ export const clrService = {
       };
     }
 
-    // Comparability check: Basis matching (e.g. wet_mass vs dry_mass)
-    if (
-      measurement.basis &&
-      primaryRef.basis &&
-      measurement.basis.toLowerCase().trim() !== primaryRef.basis.toLowerCase().trim()
-    ) {
+    // Comparability check: Basis matching (e.g. wet_mass vs dry_mass, mass vs volume)
+    if (!areBasesComparable(measurement.basis, primaryRef.basis)) {
       return {
         contaminant,
         contaminantName,
@@ -239,11 +311,18 @@ export const clrService = {
       statusText = StatusCatalogue.ST_04_ABOVE_LIMIT;
     }
 
-    // Secondary EU comparison calculation (if available)
+    // Secondary EU comparison calculation (if unit & basis are comparable)
     let secondaryResult: ClrCalculationResult["secondaryReference"] = null;
     if (secondaryRef && secondaryRef.limitValue > 0) {
       const euNormLimit = normalizeConcentrationToMgKg(secondaryRef.limitValue, secondaryRef.unit);
-      if (euNormLimit !== null) {
+      const euDomain = secondaryRef.unit ? getUnitDomain(secondaryRef.unit) : "unknown";
+      const isSecondaryDomainCompatible =
+        measDomain === "unknown" || euDomain === "unknown" || measDomain === euDomain;
+      if (
+        euNormLimit !== null &&
+        isSecondaryDomainCompatible &&
+        areBasesComparable(measurement.basis, secondaryRef.basis)
+      ) {
         const euClr = Number((normConc / euNormLimit).toFixed(4));
         let euStatus: StatusCatalogueType;
         if (euClr < 0.8) euStatus = StatusCatalogue.ST_01_BELOW_LIMIT;
@@ -260,8 +339,8 @@ export const clrService = {
     }
 
     // Eligibility check for product-level CCI:
-    // GR-03: Only PRODUCT_SPECIFIC evidence can contribute to CCI.
-    const isEligibleForCci = evidenceLevel === "PRODUCT_SPECIFIC";
+    // GR-03: PRODUCT_SPECIFIC and BRAND_LEVEL evidence are eligible for product CCI.
+    const isEligibleForCci = evidenceLevel === "PRODUCT_SPECIFIC" || evidenceLevel === "BRAND_LEVEL";
 
     return {
       contaminant,

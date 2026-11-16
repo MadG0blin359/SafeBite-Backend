@@ -49,7 +49,8 @@ export const safetyEngineService = {
     // Resolve standards for all 5 contaminants for this category & matrix
     const resolvedStandards = await standardResolverService.resolveAllForCategory(
       product.categoryId,
-      product.matrix
+      product.matrix,
+      product.name
     );
 
     // Group research data by contaminant
@@ -107,15 +108,8 @@ export const safetyEngineService = {
     // Generate plain language interpretation (FR-07)
     const interpretation = interpretationService.generateInterpretation(product.name, scoreResult);
 
-    // Persist or update the AnalysisResult in PostgreSQL for caching & recommendations
+    // Persist or update the AnalysisResult in PostgreSQL for caching & recommendations atomically
     try {
-      const existing = await prisma.analysisResult.findFirst({
-        where: {
-          productId: product.id,
-          ruleVersion: ACTIVE_RULE_VERSION,
-        },
-      });
-
       const analysisData = {
         ruleVersion: ACTIVE_RULE_VERSION,
         clrBreakdown: clrResults as any,
@@ -132,19 +126,19 @@ export const safetyEngineService = {
         calculatedAt: new Date(),
       };
 
-      if (existing) {
-        await prisma.analysisResult.update({
-          where: { id: existing.id },
-          data: analysisData,
-        });
-      } else {
-        await prisma.analysisResult.create({
-          data: {
+      await prisma.analysisResult.upsert({
+        where: {
+          productId_ruleVersion: {
             productId: product.id,
-            ...analysisData,
+            ruleVersion: ACTIVE_RULE_VERSION,
           },
-        });
-      }
+        },
+        update: analysisData,
+        create: {
+          productId: product.id,
+          ...analysisData,
+        },
+      });
     } catch (err) {
       console.error("Warning: Failed to cache analysis result to DB:", err);
     }

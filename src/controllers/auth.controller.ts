@@ -73,7 +73,9 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 };
 
 export const signOut = async (req: Request, res: Response): Promise<void> => {
-  // Stateless JWT: client discards token
+  if (req.user?.id) {
+    await authService.signOut(req.user.id);
+  }
   res.status(200).json({
     success: true,
     message: "Signed out successfully",

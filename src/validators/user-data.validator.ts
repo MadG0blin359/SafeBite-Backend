@@ -49,3 +49,7 @@ export const healthTagsSchema = z.object({
 export const productIdParamSchema = z.object({
   productId: z.string().uuid({ message: "Invalid product ID format" }),
 });
+
+export const historyQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});

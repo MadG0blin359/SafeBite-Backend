@@ -37,6 +37,26 @@
     {
       "name": "User Data",
       "description": "Scan/search history, favorites, watchlist alerts, and consented health profile"
+    },
+    {
+      "name": "Standards",
+      "description": "Read-only PSQCA, Codex, and EU heavy-metal regulatory standards and resolution engine"
+    },
+    {
+      "name": "Products",
+      "description": "Food products catalog, search, and barcode resolution"
+    },
+    {
+      "name": "Categories",
+      "description": "Food categories and associated regulatory standards"
+    },
+    {
+      "name": "Safety",
+      "description": "Deterministic heavy metal safety scoring and interpretation"
+    },
+    {
+      "name": "Alternatives",
+      "description": "Evidence-based safer product alternatives (FR-08)"
     }
   ],
   "components": {
@@ -99,7 +119,10 @@
     "schemas": {
       "UserRole": {
         "type": "string",
-        "enum": ["USER", "ADMIN"]
+        "enum": [
+          "USER",
+          "ADMIN"
+        ]
       },
       "HealthTag": {
         "type": "string",
@@ -118,15 +141,27 @@
       },
       "StorageFolder": {
         "type": "string",
-        "enum": ["products", "users", "research"]
+        "enum": [
+          "products",
+          "users",
+          "research"
+        ]
       },
       "AllowedMimeType": {
         "type": "string",
-        "enum": ["image/jpeg", "image/png", "image/webp"]
+        "enum": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ]
       },
       "ErrorResponse": {
         "type": "object",
-        "required": ["success", "message", "statusCode"],
+        "required": [
+          "success",
+          "message",
+          "statusCode"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -144,7 +179,10 @@
       },
       "ValidationIssue": {
         "type": "object",
-        "required": ["field", "message"],
+        "required": [
+          "field",
+          "message"
+        ],
         "properties": {
           "field": {
             "type": "string",
@@ -158,7 +196,11 @@
       },
       "ValidationErrorResponse": {
         "type": "object",
-        "required": ["success", "message", "errors"],
+        "required": [
+          "success",
+          "message",
+          "errors"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -178,7 +220,10 @@
       },
       "RateLimitErrorResponse": {
         "type": "object",
-        "required": ["success", "message"],
+        "required": [
+          "success",
+          "message"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -192,7 +237,10 @@
       },
       "MessageOnlyResponse": {
         "type": "object",
-        "required": ["success", "message"],
+        "required": [
+          "success",
+          "message"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -205,7 +253,13 @@
       },
       "HealthProbeResponse": {
         "type": "object",
-        "required": ["success", "status", "service", "uptime", "timestamp"],
+        "required": [
+          "success",
+          "status",
+          "service",
+          "uptime",
+          "timestamp"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -232,7 +286,12 @@
       },
       "ReadinessResponse": {
         "type": "object",
-        "required": ["success", "status", "checks", "timestamp"],
+        "required": [
+          "success",
+          "status",
+          "checks",
+          "timestamp"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -244,7 +303,11 @@
           },
           "checks": {
             "type": "object",
-            "required": ["server", "database", "pgvector"],
+            "required": [
+              "server",
+              "database",
+              "pgvector"
+            ],
             "properties": {
               "server": {
                 "type": "string",
@@ -269,7 +332,12 @@
       },
       "ReadinessUnavailableResponse": {
         "type": "object",
-        "required": ["success", "status", "error", "timestamp"],
+        "required": [
+          "success",
+          "status",
+          "error",
+          "timestamp"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -292,7 +360,15 @@
       },
       "UserResponse": {
         "type": "object",
-        "required": ["id", "email", "role", "emailVerified", "healthConsent", "healthTags", "createdAt"],
+        "required": [
+          "id",
+          "email",
+          "role",
+          "emailVerified",
+          "healthConsent",
+          "healthTags",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -337,7 +413,9 @@
             "items": {
               "$ref": "#/components/schemas/HealthTag"
             },
-            "example": ["PREGNANCY"]
+            "example": [
+              "PREGNANCY"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -353,7 +431,9 @@
       },
       "ValidateEmailRequest": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -364,7 +444,10 @@
       },
       "ValidateEmailResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -372,7 +455,11 @@
           },
           "data": {
             "type": "object",
-            "required": ["valid", "normalizedEmail", "checks"],
+            "required": [
+              "valid",
+              "normalizedEmail",
+              "checks"
+            ],
             "properties": {
               "valid": {
                 "type": "boolean",
@@ -384,12 +471,30 @@
               },
               "checks": {
                 "type": "object",
-                "required": ["syntax", "noInvalidChars", "notDisposable", "noKnownTypo", "domainResolvable"],
+                "required": [
+                  "syntax",
+                  "noInvalidChars",
+                  "notDisposable",
+                  "noKnownTypo",
+                  "domainResolvable"
+                ],
                 "properties": {
-                  "syntax": { "type": "boolean", "example": true },
-                  "noInvalidChars": { "type": "boolean", "example": true },
-                  "notDisposable": { "type": "boolean", "example": true },
-                  "noKnownTypo": { "type": "boolean", "example": true },
+                  "syntax": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "noInvalidChars": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "notDisposable": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "noKnownTypo": {
+                    "type": "boolean",
+                    "example": true
+                  },
                   "domainResolvable": {
                     "type": "boolean",
                     "nullable": true,
@@ -412,7 +517,11 @@
       },
       "SignUpPendingResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -424,7 +533,11 @@
           },
           "data": {
             "type": "object",
-            "required": ["user", "requiresEmailVerification", "expiresInMinutes"],
+            "required": [
+              "user",
+              "requiresEmailVerification",
+              "expiresInMinutes"
+            ],
             "properties": {
               "user": {
                 "$ref": "#/components/schemas/UserResponse"
@@ -443,7 +556,10 @@
       },
       "VerifyEmailRequest": {
         "type": "object",
-        "required": ["email", "otp"],
+        "required": [
+          "email",
+          "otp"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -461,7 +577,9 @@
       },
       "ResendVerificationRequest": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -472,7 +590,10 @@
       },
       "SignUpRequest": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -496,7 +617,10 @@
       },
       "SignInRequest": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -525,7 +649,9 @@
       },
       "ForgotPasswordRequest": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -536,7 +662,10 @@
       },
       "VerifyResetOtpRequest": {
         "type": "object",
-        "required": ["email", "otp"],
+        "required": [
+          "email",
+          "otp"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -555,7 +684,11 @@
       },
       "VerifyResetOtpResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -567,7 +700,10 @@
           },
           "data": {
             "type": "object",
-            "required": ["resetToken", "expiresInMinutes"],
+            "required": [
+              "resetToken",
+              "expiresInMinutes"
+            ],
             "properties": {
               "resetToken": {
                 "type": "string",
@@ -584,7 +720,10 @@
       },
       "ResetPasswordRequest": {
         "type": "object",
-        "required": ["resetToken", "newPassword"],
+        "required": [
+          "resetToken",
+          "newPassword"
+        ],
         "properties": {
           "resetToken": {
             "type": "string",
@@ -603,7 +742,11 @@
       },
       "AuthSuccessResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -615,7 +758,10 @@
           },
           "data": {
             "type": "object",
-            "required": ["user", "token"],
+            "required": [
+              "user",
+              "token"
+            ],
             "properties": {
               "user": {
                 "$ref": "#/components/schemas/UserResponse"
@@ -630,7 +776,10 @@
       },
       "GetProfileResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -638,7 +787,9 @@
           },
           "data": {
             "type": "object",
-            "required": ["user"],
+            "required": [
+              "user"
+            ],
             "properties": {
               "user": {
                 "$ref": "#/components/schemas/UserResponse"
@@ -649,7 +800,11 @@
       },
       "UpdateProfileResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -661,7 +816,9 @@
           },
           "data": {
             "type": "object",
-            "required": ["user"],
+            "required": [
+              "user"
+            ],
             "properties": {
               "user": {
                 "$ref": "#/components/schemas/UserResponse"
@@ -672,7 +829,10 @@
       },
       "SignedUploadRequest": {
         "type": "object",
-        "required": ["fileName", "mimeType"],
+        "required": [
+          "fileName",
+          "mimeType"
+        ],
         "properties": {
           "fileName": {
             "type": "string",
@@ -690,7 +850,11 @@
       },
       "UploadFileResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -702,7 +866,11 @@
           },
           "data": {
             "type": "object",
-            "required": ["key", "bucket", "publicUrl"],
+            "required": [
+              "key",
+              "bucket",
+              "publicUrl"
+            ],
             "properties": {
               "key": {
                 "type": "string",
@@ -723,7 +891,10 @@
       },
       "PresignedUploadResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -731,7 +902,12 @@
           },
           "data": {
             "type": "object",
-            "required": ["key", "uploadUrl", "publicUrl", "expiresInSeconds"],
+            "required": [
+              "key",
+              "uploadUrl",
+              "publicUrl",
+              "expiresInSeconds"
+            ],
             "properties": {
               "key": {
                 "type": "string",
@@ -757,7 +933,9 @@
       },
       "SignedUrlRequest": {
         "type": "object",
-        "required": ["path"],
+        "required": [
+          "path"
+        ],
         "properties": {
           "path": {
             "type": "string",
@@ -775,7 +953,10 @@
       },
       "SignedUrlResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -783,7 +964,10 @@
           },
           "data": {
             "type": "object",
-            "required": ["signedUrl", "expiresIn"],
+            "required": [
+              "signedUrl",
+              "expiresIn"
+            ],
             "properties": {
               "signedUrl": {
                 "type": "string",
@@ -818,7 +1002,10 @@
       },
       "StorageFilesListResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -834,7 +1021,9 @@
       },
       "DeleteFilesRequest": {
         "type": "object",
-        "required": ["paths"],
+        "required": [
+          "paths"
+        ],
         "properties": {
           "paths": {
             "type": "array",
@@ -843,13 +1032,19 @@
             "items": {
               "type": "string"
             },
-            "example": ["users/8f14e45f-ceea-467a-8e8b-9f1b4c2d1101/avatar.jpg"]
+            "example": [
+              "users/8f14e45f-ceea-467a-8e8b-9f1b4c2d1101/avatar.jpg"
+            ]
           }
         }
       },
       "DeleteFilesResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -875,7 +1070,10 @@
       },
       "CategoryRef": {
         "type": "object",
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -890,7 +1088,11 @@
       },
       "ProductSummary": {
         "type": "object",
-        "required": ["id", "name", "brand"],
+        "required": [
+          "id",
+          "name",
+          "brand"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -919,7 +1121,12 @@
       },
       "HistoryProductSummary": {
         "type": "object",
-        "required": ["id", "name", "brand", "category"],
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "category"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -951,7 +1158,13 @@
       },
       "ScanHistoryItem": {
         "type": "object",
-        "required": ["id", "userId", "productId", "scannedAt", "product"],
+        "required": [
+          "id",
+          "userId",
+          "productId",
+          "scannedAt",
+          "product"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -980,7 +1193,12 @@
       },
       "SearchHistoryItem": {
         "type": "object",
-        "required": ["id", "userId", "query", "searchedAt"],
+        "required": [
+          "id",
+          "userId",
+          "query",
+          "searchedAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -1005,7 +1223,10 @@
       },
       "HistoryListResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1013,7 +1234,10 @@
           },
           "data": {
             "type": "object",
-            "required": ["scans", "searches"],
+            "required": [
+              "scans",
+              "searches"
+            ],
             "properties": {
               "scans": {
                 "type": "array",
@@ -1033,7 +1257,9 @@
       },
       "RecordScanRequest": {
         "type": "object",
-        "required": ["productId"],
+        "required": [
+          "productId"
+        ],
         "properties": {
           "productId": {
             "type": "string",
@@ -1044,7 +1270,11 @@
       },
       "RecordScanResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1056,7 +1286,13 @@
           },
           "data": {
             "type": "object",
-            "required": ["id", "userId", "productId", "scannedAt", "product"],
+            "required": [
+              "id",
+              "userId",
+              "productId",
+              "scannedAt",
+              "product"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -1087,7 +1323,9 @@
       },
       "RecordSearchRequest": {
         "type": "object",
-        "required": ["query"],
+        "required": [
+          "query"
+        ],
         "properties": {
           "query": {
             "type": "string",
@@ -1099,7 +1337,11 @@
       },
       "RecordSearchResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1116,7 +1358,11 @@
       },
       "FavoriteListItem": {
         "type": "object",
-        "required": ["favoriteId", "savedAt", "product"],
+        "required": [
+          "favoriteId",
+          "savedAt",
+          "product"
+        ],
         "properties": {
           "favoriteId": {
             "type": "string",
@@ -1130,7 +1376,12 @@
           },
           "product": {
             "type": "object",
-            "required": ["id", "name", "brand", "category"],
+            "required": [
+              "id",
+              "name",
+              "brand",
+              "category"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -1180,7 +1431,10 @@
       },
       "FavoritesListResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1196,7 +1450,11 @@
       },
       "AddFavoriteResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1208,7 +1466,13 @@
           },
           "data": {
             "type": "object",
-            "required": ["id", "userId", "productId", "createdAt", "product"],
+            "required": [
+              "id",
+              "userId",
+              "productId",
+              "createdAt",
+              "product"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -1239,7 +1503,14 @@
       },
       "WatchlistListItem": {
         "type": "object",
-        "required": ["watchlistId", "savedAt", "lastKnownGrade", "currentGrade", "hasAssessmentChanged", "product"],
+        "required": [
+          "watchlistId",
+          "savedAt",
+          "lastKnownGrade",
+          "currentGrade",
+          "hasAssessmentChanged",
+          "product"
+        ],
         "properties": {
           "watchlistId": {
             "type": "string",
@@ -1267,7 +1538,12 @@
           },
           "product": {
             "type": "object",
-            "required": ["id", "name", "brand", "category"],
+            "required": [
+              "id",
+              "name",
+              "brand",
+              "category"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -1312,7 +1588,10 @@
       },
       "WatchlistListResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1328,7 +1607,11 @@
       },
       "AddWatchlistResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1340,7 +1623,13 @@
           },
           "data": {
             "type": "object",
-            "required": ["id", "userId", "productId", "lastKnownGrade", "createdAt"],
+            "required": [
+              "id",
+              "userId",
+              "productId",
+              "lastKnownGrade",
+              "createdAt"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -1373,7 +1662,11 @@
       },
       "HealthProfileSummary": {
         "type": "object",
-        "required": ["id", "healthConsent", "healthTags"],
+        "required": [
+          "id",
+          "healthConsent",
+          "healthTags"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -1395,13 +1688,19 @@
             "items": {
               "$ref": "#/components/schemas/HealthTag"
             },
-            "example": ["PREGNANCY", "INFANT"]
+            "example": [
+              "PREGNANCY",
+              "INFANT"
+            ]
           }
         }
       },
       "HealthProfileEnvelopeResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1414,7 +1713,11 @@
       },
       "HealthProfileMutationResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1431,7 +1734,11 @@
       },
       "ClearHealthProfileResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
@@ -1443,7 +1750,11 @@
           },
           "data": {
             "type": "object",
-            "required": ["id", "healthConsent", "healthTags"],
+            "required": [
+              "id",
+              "healthConsent",
+              "healthTags"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -1467,7 +1778,9 @@
       },
       "HealthConsentRequest": {
         "type": "object",
-        "required": ["consent"],
+        "required": [
+          "consent"
+        ],
         "properties": {
           "consent": {
             "type": "boolean",
@@ -1477,7 +1790,9 @@
       },
       "HealthTagsRequest": {
         "type": "object",
-        "required": ["tags"],
+        "required": [
+          "tags"
+        ],
         "properties": {
           "tags": {
             "type": "array",
@@ -1486,9 +1801,1042 @@
             "items": {
               "$ref": "#/components/schemas/HealthTag"
             },
-            "example": ["PREGNANCY", "INFANT"]
+            "example": [
+              "PREGNANCY",
+              "INFANT"
+            ]
           }
         }
+      },
+      "ContaminantType": {
+        "type": "string",
+        "enum": [
+          "LEAD",
+          "CADMIUM",
+          "CHROMIUM",
+          "COBALT",
+          "COPPER"
+        ]
+      },
+      "StandardAuthority": {
+        "type": "string",
+        "enum": [
+          "PSQCA",
+          "CODEX",
+          "EU"
+        ]
+      },
+      "ReferenceRole": {
+        "type": "string",
+        "enum": [
+          "PRIMARY_NATIONAL",
+          "INTERNATIONAL_FALLBACK",
+          "SECONDARY_COMPARISON"
+        ]
+      },
+      "ReferenceStandardItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "authority",
+          "standardCode",
+          "version",
+          "contaminant",
+          "categoryId",
+          "limitValue",
+          "unit",
+          "basis",
+          "referenceRole"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "d290f1ee-6c54-4b01-90e6-d701748f0851"
+          },
+          "externalRecordId": {
+            "type": "string",
+            "nullable": true,
+            "example": "RL-0004"
+          },
+          "authority": {
+            "$ref": "#/components/schemas/StandardAuthority"
+          },
+          "standardCode": {
+            "type": "string",
+            "example": "PS 2102-2010"
+          },
+          "version": {
+            "type": "string",
+            "example": "2010"
+          },
+          "contaminant": {
+            "$ref": "#/components/schemas/ContaminantType"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "3b241101-e2bb-4255-8caf-4136c566a962"
+          },
+          "productMatrix": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bottled Natural Mineral Water"
+          },
+          "limitValue": {
+            "type": "number",
+            "example": 0.01
+          },
+          "unit": {
+            "type": "string",
+            "example": "mg/L"
+          },
+          "basis": {
+            "type": "string",
+            "example": "volume"
+          },
+          "referenceRole": {
+            "$ref": "#/components/schemas/ReferenceRole"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "example": "Maximum admissible concentration"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://psqca.com.pk/cs/AGRICULTURE%20AND%20FOOD%20-%2043/PS%202102-2010%20for%20Bottled%20NATURAL%20MINERAL%20WATER%20FINAL%20%20-%20Copy.pdf"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-12T16:10:00.000Z"
+          },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "example": "Bottled Natural Mineral Water"
+              }
+            }
+          }
+        }
+      },
+      "StandardsListResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceStandardItem"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ],
+            "properties": {
+              "page": {
+                "type": "integer",
+                "example": 1
+              },
+              "limit": {
+                "type": "integer",
+                "example": 25
+              },
+              "total": {
+                "type": "integer",
+                "example": 183
+              },
+              "totalPages": {
+                "type": "integer",
+                "example": 8
+              }
+            }
+          }
+        }
+      },
+      "StandardsSummaryResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "totalRecords",
+              "distinctStandardsCount",
+              "byAuthority",
+              "byContaminant",
+              "byReferenceRole"
+            ],
+            "properties": {
+              "totalRecords": {
+                "type": "integer",
+                "example": 183
+              },
+              "distinctStandardsCount": {
+                "type": "integer",
+                "example": 83
+              },
+              "byAuthority": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "example": {
+                  "PSQCA": 179,
+                  "CODEX": 2,
+                  "EU": 2
+                }
+              },
+              "byContaminant": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "example": {
+                  "LEAD": 103,
+                  "COPPER": 40,
+                  "CADMIUM": 35,
+                  "CHROMIUM": 5
+                }
+              },
+              "byReferenceRole": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "example": {
+                  "PRIMARY_NATIONAL": 121,
+                  "INTERNATIONAL_FALLBACK": 60,
+                  "SECONDARY_COMPARISON": 2
+                }
+              }
+            }
+          }
+        }
+      },
+      "StandardDetailResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReferenceStandardItem"
+          }
+        }
+      },
+      "CategoryStandardsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "category",
+              "requestedMatrix",
+              "resolved",
+              "applicableLimits"
+            ],
+            "properties": {
+              "category": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Bottled Natural Mineral Water"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "requestedMatrix": {
+                "type": "string",
+                "nullable": true,
+                "example": "Bottled Natural Mineral Water"
+              },
+              "resolved": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "primaryReference": {
+                      "$ref": "#/components/schemas/ReferenceStandardItem",
+                      "nullable": true
+                    },
+                    "secondaryReference": {
+                      "$ref": "#/components/schemas/ReferenceStandardItem",
+                      "nullable": true
+                    }
+                  }
+                }
+              },
+              "applicableLimits": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ReferenceStandardItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProductAnalysisSnapshot": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "example": "A"
+          },
+          "cci": {
+            "type": "number",
+            "nullable": true,
+            "example": 0.15
+          },
+          "maxClr": {
+            "type": "number",
+            "nullable": true,
+            "example": 0.22
+          },
+          "statusText": {
+            "type": "string",
+            "example": "Below Limit"
+          },
+          "reasonCode": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "calculatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "statusText",
+          "calculatedAt"
+        ]
+      },
+      "ProductListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "CS3"
+          },
+          "name": {
+            "type": "string",
+            "example": "Catty chins Corn Snack"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Catty chins"
+          },
+          "packageSize": {
+            "type": "string",
+            "nullable": true
+          },
+          "matrix": {
+            "type": "string",
+            "example": "solid"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "example": "Snacks & Confectionery"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "primaryBarcode": {
+            "type": "string",
+            "nullable": true,
+            "example": "8964000585283"
+          },
+          "barcodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "8964000585283"
+            ]
+          },
+          "latestAnalysis": {
+            "$ref": "#/components/schemas/ProductAnalysisSnapshot"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "matrix",
+          "barcodes",
+          "createdAt"
+        ]
+      },
+      "ResearchMeasurementItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contaminant": {
+            "$ref": "#/components/schemas/ContaminantType"
+          },
+          "concentration": {
+            "type": "number",
+            "example": 0.05
+          },
+          "unit": {
+            "type": "string",
+            "example": "mg/kg"
+          },
+          "basis": {
+            "type": "string",
+            "example": "mass"
+          },
+          "evidenceLevel": {
+            "type": "string",
+            "example": "PRODUCT_SPECIFIC"
+          },
+          "measurementStatus": {
+            "type": "string",
+            "example": "DETECTED"
+          },
+          "sd": {
+            "type": "number",
+            "nullable": true
+          },
+          "qualifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "flag": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "externalSourceId": {
+                "type": "integer",
+                "nullable": true
+              },
+              "title": {
+                "type": "string"
+              },
+              "doi": {
+                "type": "string",
+                "nullable": true
+              },
+              "url": {
+                "type": "string",
+                "nullable": true
+              },
+              "authors": {
+                "type": "string",
+                "nullable": true
+              },
+              "publicationYear": {
+                "type": "integer",
+                "nullable": true
+              },
+              "journal": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "contaminant",
+          "concentration",
+          "unit",
+          "basis",
+          "evidenceLevel",
+          "measurementStatus"
+        ]
+      },
+      "ProductDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "CS3"
+          },
+          "name": {
+            "type": "string",
+            "example": "Catty chins Corn Snack"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Catty chins"
+          },
+          "packageSize": {
+            "type": "string",
+            "nullable": true
+          },
+          "matrix": {
+            "type": "string",
+            "example": "solid"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "matchedBarcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "primaryBarcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "barcodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "latestAnalysis": {
+            "$ref": "#/components/schemas/ProductAnalysisSnapshot"
+          },
+          "researchMeasurements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResearchMeasurementItem"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "matrix",
+          "barcodes",
+          "researchMeasurements",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProductsListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductListItem"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "example": 1
+              },
+              "limit": {
+                "type": "integer",
+                "example": 20
+              },
+              "total": {
+                "type": "integer",
+                "example": 549
+              },
+              "totalPages": {
+                "type": "integer",
+                "example": 28
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "meta"
+        ]
+      },
+      "ProductDetailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProductDetail"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CategorySummaryItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Packaged Milk & Dairy"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "productCount": {
+            "type": "integer",
+            "example": 38
+          },
+          "referenceStandardCount": {
+            "type": "integer",
+            "example": 10
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "productCount",
+          "referenceStandardCount",
+          "createdAt"
+        ]
+      },
+      "CategoriesListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategorySummaryItem"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CategoryDetailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/CategorySummaryItem"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SafetyScoreClrBreakdown": {
+        "type": "object",
+        "properties": {
+          "contaminant": {
+            "$ref": "#/components/schemas/ContaminantType"
+          },
+          "concentration": {
+            "type": "number",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "clr": {
+            "type": "number",
+            "nullable": true
+          },
+          "margin": {
+            "type": "number",
+            "nullable": true
+          },
+          "statusText": {
+            "type": "string",
+            "example": "Below Limit"
+          },
+          "reasonCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceApplied": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "contaminant",
+          "statusText"
+        ]
+      },
+      "SafetyScoreResult": {
+        "type": "object",
+        "properties": {
+          "ruleVersion": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "isGradeEligible": {
+            "type": "boolean",
+            "example": true
+          },
+          "overallStatusText": {
+            "type": "string",
+            "example": "Below Limit"
+          },
+          "overallReasonCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "example": "A"
+          },
+          "cci": {
+            "type": "number",
+            "nullable": true,
+            "example": 0.12
+          },
+          "maxClr": {
+            "type": "number",
+            "nullable": true,
+            "example": 0.18
+          },
+          "highestContaminant": {
+            "type": "string",
+            "nullable": true
+          },
+          "testedCount": {
+            "type": "integer"
+          },
+          "eligibleCount": {
+            "type": "integer"
+          },
+          "missingCount": {
+            "type": "integer"
+          },
+          "ineligibleCount": {
+            "type": "integer"
+          },
+          "clrBreakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SafetyScoreClrBreakdown"
+            }
+          },
+          "includedContaminants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludedReasons": {
+            "type": "object"
+          },
+          "calculatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "ruleVersion",
+          "isGradeEligible",
+          "overallStatusText",
+          "clrBreakdown",
+          "calculatedAt"
+        ]
+      },
+      "SafetyReportResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "product": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "barcode": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "brand": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "score": {
+                "$ref": "#/components/schemas/SafetyScoreResult"
+              },
+              "interpretation": {
+                "type": "object",
+                "properties": {
+                  "headline": {
+                    "type": "string"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "driverContaminantExplanation": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "evidenceTransparencyNotice": {
+                    "type": "string"
+                  },
+                  "disclaimer": {
+                    "type": "string"
+                  },
+                  "contaminantSummaries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "AlternativeRecommendationItem": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true
+          },
+          "cci": {
+            "type": "number",
+            "nullable": true
+          },
+          "maxClr": {
+            "type": "number",
+            "nullable": true
+          },
+          "comparisonNote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "brand",
+          "comparisonNote"
+        ]
+      },
+      "AlternativesEnvelopeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "sourceProductId": {
+                "type": "string"
+              },
+              "categoryName": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "example": "Available"
+              },
+              "reasonCode": {
+                "type": "string",
+                "nullable": true
+              },
+              "alternatives": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AlternativeRecommendationItem"
+                }
+              }
+            },
+            "required": [
+              "sourceProductId",
+              "categoryName",
+              "status",
+              "alternatives"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
       }
     },
     "responses": {
@@ -1606,7 +2954,9 @@
     "/health": {
       "get": {
         "operationId": "getHealth",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Liveness probe",
         "description": "Verifies the Node.js/Express API process is up and responsive.",
         "responses": {
@@ -1633,7 +2983,9 @@
     "/ready": {
       "get": {
         "operationId": "getReadiness",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Readiness probe",
         "description": "Checks connectivity to PostgreSQL and verifies the pgvector extension is installed.",
         "responses": {
@@ -1679,7 +3031,9 @@
     "/api/auth/validate-email": {
       "post": {
         "operationId": "validateEmailInput",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Verify email input format, domain typos, disposability, and DNS MX reachability",
         "description": "Validates an email field value before signup or form submission without disclosing account existence.",
         "requestBody": {
@@ -1692,11 +3046,15 @@
               "examples": {
                 "validEmail": {
                   "summary": "Valid deliverable email",
-                  "value": { "email": "ayesha.khan@gmail.com" }
+                  "value": {
+                    "email": "ayesha.khan@gmail.com"
+                  }
                 },
                 "domainTypo": {
                   "summary": "Mistyped domain detection",
-                  "value": { "email": "ayesha.khan@gmial.com" }
+                  "value": {
+                    "email": "ayesha.khan@gmial.com"
+                  }
                 }
               }
             }
@@ -1763,7 +3121,9 @@
     "/api/auth/signup": {
       "post": {
         "operationId": "signUp",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Register a new user account and send confirmation OTP",
         "description": "Validates strict email format, domain typos, disposable domains, password policy, and Unicode fullName; creates an unverified account (or refreshes a pending unverified account); and sends a 6-digit confirmation OTP via Mailtrap/SMTP.",
         "requestBody": {
@@ -1862,7 +3222,9 @@
     "/api/auth/verify-email": {
       "post": {
         "operationId": "verifyEmailOtp",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Confirm new account email with 6-digit OTP and obtain JWT",
         "description": "Validates the 6-digit confirmation OTP (maximum 5 failed attempts), marks emailVerified=true, and issues the user's 90-day JWT Bearer token.",
         "requestBody": {
@@ -1915,8 +3277,12 @@
               "application/json": {
                 "schema": {
                   "oneOf": [
-                    { "$ref": "#/components/schemas/ErrorResponse" },
-                    { "$ref": "#/components/schemas/ValidationErrorResponse" }
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    }
                   ]
                 },
                 "examples": {
@@ -1949,7 +3315,9 @@
     "/api/auth/resend-verification-otp": {
       "post": {
         "operationId": "resendVerificationOtp",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Resend 6-digit account confirmation OTP",
         "description": "Dispatches a new 6-digit confirmation OTP for an unverified account (15-minute expiry, 30-second resend cooldown) without revealing whether an email is registered or already verified.",
         "requestBody": {
@@ -2007,7 +3375,9 @@
     "/api/auth/login": {
       "post": {
         "operationId": "signIn",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Authenticate verified user and receive 90-day JWT token",
         "requestBody": {
           "required": true,
@@ -2043,7 +3413,9 @@
                       "emailVerified": true,
                       "emailVerifiedAt": "2026-11-12T07:32:00.000Z",
                       "healthConsent": true,
-                      "healthTags": ["PREGNANCY"],
+                      "healthTags": [
+                        "PREGNANCY"
+                      ],
                       "createdAt": "2026-11-10T09:00:00.000Z"
                     },
                     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjhmMTRlNDVmLWNlZWEtNDY3YS04ZThiLTlmMWI0YzJkMTEwMSJ9.example_signature"
@@ -2094,7 +3466,9 @@
     "/api/auth/forgot-password": {
       "post": {
         "operationId": "forgotPassword",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Request a 6-digit password reset OTP code",
         "description": "Step 1 of the 3-screen password reset workflow (Email -> Enter OTP -> New Password). Generates a single-use 6-digit OTP (15-minute expiry, 30-second resend cooldown) and dispatches it via configured Mailtrap/SMTP without leaking whether the email exists.",
         "requestBody": {
@@ -2152,7 +3526,9 @@
     "/api/auth/verify-reset-otp": {
       "post": {
         "operationId": "verifyResetOtp",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Verify 6-digit password reset OTP code",
         "description": "Step 2 of the password reset workflow. Validates the 6-digit OTP (maximum 5 failed attempts per code) and exchanges it for a short-lived single-use reset token (10-minute expiry).",
         "requestBody": {
@@ -2194,8 +3570,12 @@
               "application/json": {
                 "schema": {
                   "oneOf": [
-                    { "$ref": "#/components/schemas/ErrorResponse" },
-                    { "$ref": "#/components/schemas/ValidationErrorResponse" }
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    }
                   ]
                 },
                 "examples": {
@@ -2241,7 +3621,9 @@
     "/api/auth/reset-password": {
       "post": {
         "operationId": "resetPassword",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Complete password reset with verified token",
         "description": "Step 3 of the password reset workflow. Validates the single-use reset token from /api/auth/verify-reset-otp, updates the bcrypt password hash, consumes the reset session, and revokes all previously issued JWTs.",
         "requestBody": {
@@ -2279,8 +3661,12 @@
               "application/json": {
                 "schema": {
                   "oneOf": [
-                    { "$ref": "#/components/schemas/ErrorResponse" },
-                    { "$ref": "#/components/schemas/ValidationErrorResponse" }
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    }
                   ]
                 },
                 "examples": {
@@ -2318,9 +3704,15 @@
     "/api/auth/profile": {
       "get": {
         "operationId": "getProfile",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Get current authenticated user profile",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Authenticated user profile details",
@@ -2341,7 +3733,9 @@
                       "emailVerifiedAt": "2026-11-12T07:32:00.000Z",
                       "healthConsent": true,
                       "consentDate": "2026-11-11T10:15:30.000Z",
-                      "healthTags": ["PREGNANCY"],
+                      "healthTags": [
+                        "PREGNANCY"
+                      ],
                       "createdAt": "2026-11-10T09:00:00.000Z"
                     }
                   }
@@ -2374,10 +3768,16 @@
       },
       "patch": {
         "operationId": "updateProfile",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Update authenticated user profile",
         "description": "Updates mutable profile fields using the same strict Unicode name validation policy enforced at signup.",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2423,7 +3823,9 @@
                       "emailVerifiedAt": "2026-11-12T07:32:00.000Z",
                       "healthConsent": true,
                       "consentDate": "2026-11-11T10:15:30.000Z",
-                      "healthTags": ["PREGNANCY"],
+                      "healthTags": [
+                        "PREGNANCY"
+                      ],
                       "createdAt": "2026-11-10T09:00:00.000Z",
                       "updatedAt": "2026-11-11T12:58:00.000Z"
                     }
@@ -2450,10 +3852,16 @@
     "/api/auth/logout": {
       "post": {
         "operationId": "signOut",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Acknowledge user logout",
         "description": "Stateless JWT logout acknowledgement; client discards its stored token.",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Signed out successfully",
@@ -2481,16 +3889,24 @@
     "/api/storage/upload": {
       "post": {
         "operationId": "uploadFile",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "summary": "Upload an image directly through server buffer to AWS S3",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["file"],
+                "required": [
+                  "file"
+                ],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -2566,9 +3982,15 @@
     "/api/storage/signed-upload": {
       "post": {
         "operationId": "getPresignedUploadUrl",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "summary": "Request a presigned PUT upload URL for direct mobile-to-S3 upload",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2632,9 +4054,15 @@
     "/api/storage/signed-url": {
       "post": {
         "operationId": "createSignedUrl",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "summary": "Generate a presigned download URL for an S3 object",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2685,10 +4113,16 @@
     "/api/storage/files": {
       "get": {
         "operationId": "listFiles",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "summary": "List files within permitted S3 folder",
         "description": "Non-admin users may only list 'products', 'research', or their own 'users/<userId>' directory.",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/StorageFolderQueryParam"
@@ -2740,10 +4174,16 @@
       },
       "delete": {
         "operationId": "deleteFiles",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "summary": "Delete files from S3 storage (user-scoped or Admin)",
         "description": "Non-admin users can only delete keys under their own 'users/<userId>/' directory.",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2809,9 +4249,15 @@
     "/api/user/history": {
       "get": {
         "operationId": "getHistory",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Get user scan and search history (FR-12)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/HistoryLimitQueryParam"
@@ -2870,9 +4316,15 @@
       },
       "delete": {
         "operationId": "clearHistory",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Complete scan & search history wipe (NFR-PR-02)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "All scan and search history deleted",
@@ -2900,9 +4352,15 @@
     "/api/user/history/scan": {
       "post": {
         "operationId": "recordScan",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Record a product barcode scan in history (FR-12-02)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2962,9 +4420,15 @@
     "/api/user/history/search": {
       "post": {
         "operationId": "recordSearch",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Record a text search query in history (FR-12-01)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3014,9 +4478,15 @@
     "/api/user/favorites": {
       "get": {
         "operationId": "getFavorites",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "List user favorite products (FR-13-03)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Favorites retrieved with latest safety grade snapshot",
@@ -3060,9 +4530,15 @@
     "/api/user/favorites/{productId}": {
       "post": {
         "operationId": "addFavorite",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Add product to favorites (FR-13-01)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/ProductIdPathParam"
@@ -3112,9 +4588,15 @@
       },
       "delete": {
         "operationId": "removeFavorite",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Remove product from favorites (FR-13-05)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/ProductIdPathParam"
@@ -3165,9 +4647,15 @@
     "/api/user/watchlist": {
       "get": {
         "operationId": "getWatchlist",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "List user watchlist with grade change alerts (FR-13-07)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Watchlist items retrieved with assessment-change detection",
@@ -3213,9 +4701,15 @@
     "/api/user/watchlist/{productId}": {
       "post": {
         "operationId": "addToWatchlist",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Add product to watchlist (FR-13-02)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/ProductIdPathParam"
@@ -3259,9 +4753,15 @@
       },
       "delete": {
         "operationId": "removeFromWatchlist",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Remove product from watchlist (FR-13-06)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/ProductIdPathParam"
@@ -3312,9 +4812,15 @@
     "/api/user/health-profile": {
       "get": {
         "operationId": "getHealthProfile",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Get health profile and consented tags (FR-16-01)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Health profile retrieved",
@@ -3329,7 +4835,10 @@
                     "id": "8f14e45f-ceea-467a-8e8b-9f1b4c2d1101",
                     "healthConsent": true,
                     "consentDate": "2026-11-11T10:15:30.000Z",
-                    "healthTags": ["PREGNANCY", "INFANT"]
+                    "healthTags": [
+                      "PREGNANCY",
+                      "INFANT"
+                    ]
                   }
                 }
               }
@@ -3360,9 +4869,15 @@
       },
       "delete": {
         "operationId": "clearHealthProfile",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Revoke consent and delete health tags (FR-16-02)",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Consent revoked and tags cleared",
@@ -3395,10 +4910,16 @@
     "/api/user/health-profile/consent": {
       "put": {
         "operationId": "setHealthConsent",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Update explicit health consent state (FR-16-02)",
         "description": "Setting consent to false automatically clears saved healthTags.",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3459,10 +4980,16 @@
     "/api/user/health-profile/tags": {
       "put": {
         "operationId": "updateHealthTags",
-        "tags": ["User Data"],
+        "tags": [
+          "User Data"
+        ],
         "summary": "Update consented health-context tags (FR-16-01)",
         "description": "Requires explicit healthConsent=true beforehand; otherwise returns 403 Forbidden.",
-        "security": [{ "BearerAuth": [] }],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3471,7 +4998,10 @@
                 "$ref": "#/components/schemas/HealthTagsRequest"
               },
               "example": {
-                "tags": ["PREGNANCY", "INFANT"]
+                "tags": [
+                  "PREGNANCY",
+                  "INFANT"
+                ]
               }
             }
           }
@@ -3491,7 +5021,10 @@
                     "id": "8f14e45f-ceea-467a-8e8b-9f1b4c2d1101",
                     "healthConsent": true,
                     "consentDate": "2026-11-11T10:15:30.000Z",
-                    "healthTags": ["PREGNANCY", "INFANT"]
+                    "healthTags": [
+                      "PREGNANCY",
+                      "INFANT"
+                    ]
                   }
                 }
               }
@@ -3535,6 +5068,613 @@
           },
           "429": {
             "$ref": "#/components/responses/RateLimitedError"
+          }
+        }
+      }
+    },
+    "/api/standards": {
+      "get": {
+        "operationId": "listStandards",
+        "tags": [
+          "Standards"
+        ],
+        "summary": "List and filter regulatory reference standards",
+        "description": "Returns paginated PSQCA, Codex, and EU heavy-metal reference limits with optional filtering by category, authority, contaminant, role, standard code, or search term.",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "authority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StandardAuthority"
+            }
+          },
+          {
+            "name": "contaminant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ContaminantType"
+            }
+          },
+          {
+            "name": "referenceRole",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReferenceRole"
+            }
+          },
+          {
+            "name": "standardCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "PS 2102-2010"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Mineral Water"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of regulatory limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedError"
+          }
+        }
+      }
+    },
+    "/api/standards/summary": {
+      "get": {
+        "operationId": "getStandardsSummary",
+        "tags": [
+          "Standards"
+        ],
+        "summary": "Get regulatory standards summary metrics",
+        "description": "Returns aggregate counts of seeded regulatory limits grouped by authority, contaminant, and reference role.",
+        "responses": {
+          "200": {
+            "description": "Standards inventory summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardsSummaryResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedError"
+          }
+        }
+      }
+    },
+    "/api/standards/categories/{categoryId}": {
+      "get": {
+        "operationId": "getCategoryStandards",
+        "tags": [
+          "Standards"
+        ],
+        "summary": "Resolve primary national, Codex fallback, and EU standards for a category",
+        "description": "Runs standardResolverService for a SafeBite food category (with optional product matrix and contaminant filter) and returns both resolved limits and all matching rows.",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "matrix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bottled Natural Mineral Water"
+          },
+          {
+            "name": "contaminant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ContaminantType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolved category standards",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryStandardsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedError"
+          }
+        }
+      }
+    },
+    "/api/standards/{id}": {
+      "get": {
+        "operationId": "getStandardById",
+        "tags": [
+          "Standards"
+        ],
+        "summary": "Get single regulatory standard by UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single regulatory standard record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedError"
+          }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "List and search food products with pagination and filters",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query across name, brand, or barcode"
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by category UUID"
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by brand name"
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "A",
+                "B",
+                "C",
+                "D",
+                "F"
+              ]
+            },
+            "description": "Filter by active safety grade"
+          },
+          {
+            "name": "hasBarcode",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by barcoded vs unbarcoded/bulk products"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of food products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductsListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get food product detail by ID or product code (e.g. S1, CS3, N2)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product UUID or product code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Food product detail including research measurements and sources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/barcode/{barcode}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Look up product by retail GTIN / EAN-13 / UPC-A barcode",
+        "description": "Supports primary and secondary variant barcodes, zero-padded 11-digit UPC-A restoration, and Open Food Facts recovered barcodes.",
+        "parameters": [
+          {
+            "name": "barcode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Retail barcode string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matched food product with scientific laboratory measurements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No product found matching barcode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "List all 21 food categories with product and standard counts",
+        "responses": {
+          "200": {
+            "description": "List of food categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/{id}": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Get category details by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Category UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/{id}/products": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "List products in a specific category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Category UUID"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of category products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductsListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/safety/{productId}": {
+      "get": {
+        "tags": [
+          "Safety"
+        ],
+        "summary": "Full deterministic heavy metal safety evaluation and interpretation",
+        "description": "Evaluates product measurements against regulatory standards, calculates CLRs, computes Cumulative Contamination Index (CCI), assigns Decision-Support Grade (A-F), and generates plain-language consumer interpretations.",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product UUID or product code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deterministic safety score and plain-language interpretation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyReportResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alternatives/{productId}": {
+      "get": {
+        "tags": [
+          "Alternatives"
+        ],
+        "summary": "Evidence-based safer product alternatives (FR-08)",
+        "description": "Recommends safer products within the same food category having directly comparable, product-specific analysis results under the active rule version.",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product UUID or product code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Safer alternatives ranking and comparison notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlternativesEnvelopeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }

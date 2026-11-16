@@ -18,7 +18,7 @@ export const validate = (schemas: ValidationSchemas) => {
         req.body = await schemas.body.parseAsync(req.body);
       }
       if (schemas.query) {
-        req.query = await schemas.query.parseAsync(req.query);
+        req.validatedQuery = await schemas.query.parseAsync(req.query);
       }
       if (schemas.params) {
         req.params = await schemas.params.parseAsync(req.params);

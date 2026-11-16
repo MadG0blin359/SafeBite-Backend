@@ -190,9 +190,9 @@ export const userDataService = {
           barcode: fav.product.barcode,
           category: fav.product.category.name,
           imageUrl: fav.product.imageUrl,
-          grade: latestAnalysis?.grade || null,
-          cci: latestAnalysis?.cci || null,
-          statusText: latestAnalysis?.statusText || null,
+          grade: latestAnalysis?.grade ?? null,
+          cci: latestAnalysis?.cci ?? null,
+          statusText: latestAnalysis?.statusText ?? null,
         },
       };
     });
@@ -296,8 +296,8 @@ export const userDataService = {
           barcode: item.product.barcode,
           category: item.product.category.name,
           imageUrl: item.product.imageUrl,
-          cci: latestAnalysis?.cci || null,
-          statusText: latestAnalysis?.statusText || null,
+          cci: latestAnalysis?.cci ?? null,
+          statusText: latestAnalysis?.statusText ?? null,
         },
       };
     });

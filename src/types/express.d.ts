@@ -12,6 +12,7 @@ declare global {
     interface Request {
       user?: SafeBiteUserPayload;
       token?: string;
+      validatedQuery?: Record<string, any>;
     }
   }
 }
