@@ -1,133 +1,75 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Node.js-20_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Node.js-%E2%89%A520_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
-  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/pgvector-Vector_Search-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="pgvector" />
-  <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
-  <img src="https://img.shields.io/badge/Groq-Fallback_LLM-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
-  <img src="https://img.shields.io/badge/AWS-Cloud-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Prisma-6.4-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15_+_pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL + pgvector" />
+  <img src="https://img.shields.io/badge/AWS-S3-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS S3" />
 </p>
 
 # 🛡️ SafeBite — Backend API
 
-> **AI-powered food safety intelligence for Pakistani consumers.**
+> **Evidence-based heavy metal food safety intelligence for Pakistani consumers.**
 >
-> SafeBite analyzes heavy metal contamination in everyday food products, compares findings against international safety standards (Codex Alimentarius (WHO/FAO), EU, PSQCA), and delivers actionable safety insights through a mobile app — powered by a RAG-based AI chatbot.
+> SafeBite links barcoded retail food products and local staples to peer-reviewed heavy metal contamination research, evaluates measurements against hierarchical regulatory limits (**PSQCA → Codex Alimentarius → EU**), and computes deterministic **CLR / CCI / A–F** safety grades.
 
 ---
 
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Features](#-features)
+- [Dataset & Catalog Snapshot](#-dataset--catalog-snapshot)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
 - [API Endpoints](#-api-endpoints)
 - [Database Schema](#-database-schema)
-- [RAG Pipeline](#-rag-pipeline)
-- [Safety Standards](#-safety-standards)
-- [Project Roadmap](#-project-roadmap)
-- [Contributing](#-contributing)
+- [Safety Analysis & Standards Hierarchy](#-safety-analysis--standards-hierarchy)
+- [Project Structure](#-project-structure)
+- [Roadmap & Implementation Status](#-roadmap--implementation-status)
 - [License](#-license)
 
 ---
 
 ## 🔍 Overview
 
-Pakistani consumers lack accessible, evidence-based information about food safety — particularly regarding heavy metal contamination in locally available products. SafeBite bridges this gap by:
+Pakistani consumers lack accessible, product-level information about heavy metal contamination in everyday foods. SafeBite bridges peer-reviewed laboratory studies and regulatory standards through a REST API built for the SafeBite mobile application:
 
-- **Scanning barcodes** to instantly retrieve product safety data
-- **Analyzing contamination levels** against three tiers of international standards
-- **Generating safety scores** using a deterministic, weighted algorithm
-- **Recommending safer alternatives** within the same product category
-- **Answering questions** via an AI chatbot grounded in real research data (RAG)
-
----
-
-## 🏗 Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    AWS Cloud Environment                    │
-│  ┌─────────────────┐         ┌──────────────────────────┐   │
-│  │   S3 Bucket     │         │    EC2 t2.micro (1GB)    │   │
-│  │  safebite-assets│         │  ┌────────────────────┐  │   │
-│  │                 │         │  │   Nginx (80/443)   │  │   │
-│  │ • Product imgs  │         │  │        ↓           │  │   │
-│  │ • Research PDFs │         │  │  PM2 + Node.js 20  │  │   │
-│  │ • App assets    │         │  │  ┌──────────────┐  │  │   │
-│  └─────────────────┘         │  │  │ Express + TS │  │  │   │
-│                              │  │  │  ┌────────┐  │  │  │   │
-│                              │  │  │  │Prisma  │  │  │  │   │
-│  ┌─────────────────┐         │  │  │  │ Client │  │  │  │   │
-│  │  RDS PostgreSQL │◄────────┘  │  │  └───┬────┘  │  │  │   │
-│  │  db.t3.micro    │   SSL/TLS  │  │      │       │  │  │   │
-│  │                 │            │  └──────┼───────┘  │  │   │
-│  │ • Products      │            │         │          │  │   │
-│  │ • ResearchData  │            └─────────┼──────────┘  │   │
-│  │ • ReferenceStd  │                      │             │   │
-│  │ • VectorStore   │◄─────────────────────┘             │   │
-│  │   (pgvector)    │         OpenAI API (HTTPS)         │   │
-│  └─────────────────┘                                    │   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  React Native   │
-                    │   (Expo Go)     │
-                    │   Mobile App    │
-                    └─────────────────┘
-```
-
-**Key components:**
-
-| Component         | Service              | Purpose                                      |
-| ----------------- | -------------------- | -------------------------------------------- |
-| **Compute**       | EC2 t2.micro         | Hosts the Express API behind Nginx           |
-| **Database**      | RDS PostgreSQL 15    | Stores products, research data, and vectors  |
-| **Object Storage** | S3                   | Product images, research PDFs, app assets    |
-| **AI**            | OpenAI API           | GPT-4o-mini (chat) + text-embedding-3-small  |
-| **Client**        | React Native (Expo)  | Cross-platform mobile app                    |
+- **Barcode & Catalog Lookup:** Look up products by GS1-validated GTIN (`EAN-13`, `UPC-A`, `EAN-8`, `GTIN-14`) or filter by category, brand, grade, and `ProductType`.
+- **Consumer-Facing Product Taxonomy:** Separates retail and consumer staples (`COMMERCIAL_PACKAGED`, `INFORMAL_WRAPPED`, `LOOSE_COMMODITY`) from internal academic baselines (`RESEARCH_BENCHMARK`) via `isConsumerFacing`.
+- **Deterministic Safety Engine (`ruleVersion = "1.0.0"`):** Computes per-contaminant **Contamination Limit Ratios (CLR)**, handles **Limit of Detection (`BELOW_LOD`)** compliance and unit/basis normalization, aggregates eligible CLRs into the **Cumulative Contamination Index (CCI)**, and assigns **A–F** grades.
+- **Safer Alternatives:** Ranks safer products within the same food category by lower CCI/CLR.
+- **Auth, User Profiles & Storage:** JWT authentication with email OTP verification and 3-step password reset (Mailtrap Sending API + SMTP fallback), user scan/search history, favorites, watchlist, health-context consent/tags, and AWS S3 media storage.
+- **RAG Readiness:** `VectorStore` (`pgvector` `vector(1536)`) schema and implementation plan ready for the upcoming grounded AI assistant.
 
 ---
 
-## ✨ Features
+## 📊 Dataset & Catalog Snapshot
 
-| #  | Feature                              | Technical Implementation                                                 |
-| -- | ------------------------------------ | ------------------------------------------------------------------------ |
-| 1  | **Barcode Product Scanner**          | `expo-camera` + `expo-barcode-scanner`                                   |
-| 2  | **Product Lookup by Barcode**        | `GET /api/products/:barcode` → Prisma → PostgreSQL                       |
-| 3  | **Heavy Metal Safety Analysis**      | Compare research data against `ReferenceStandards` table                 |
-| 4  | **Standardized Safety Scoring**      | Deterministic algorithm: weighted comparison against tiered standards     |
-| 5  | **Contaminant-by-Contaminant View**  | Per-metal display with availability indicators                           |
-| 6  | **Research Evidence Transparency**   | Source URL, study metadata, measurement type                             |
-| 7  | **Safer Alternative Recommendations** | SQL query: same category, sorted by lower contamination                 |
-| 8  | **Food Category Explorer**           | Browse all categories, filter by contaminant                             |
-| 9  | **Search & Scan History**            | AsyncStorage (local) or PostgreSQL (if auth added)                       |
-| 10 | **Favorites / Watchlist**            | Local storage or user-specific DB table                                  |
-| 11 | **Offline/Cached Results**           | AsyncStorage cache with TTL                                              |
-| 12 | **Educational Content About Metals** | Static content + chatbot dynamic explanations                            |
+From the ingested seed dataset ([analysis/PRODUCT_DATA_BREAKDOWN.md](analysis/PRODUCT_DATA_BREAKDOWN.md)):
+
+| Dimension | Count | Notes |
+| --- | ---: | --- |
+| **Active Food Products** | **519** | **302** consumer-facing (`204` `COMMERCIAL_PACKAGED`) + **217** `RESEARCH_BENCHMARK` |
+| **Retail Barcodes (`ProductBarcode`)** | **848** | Across **135** barcoded commercial SKUs (`811` EAN-13, `19` UPC-A, `17` EAN-8, `1` GTIN-14) |
+| **Heavy Metal Measurements (`ResearchData`)** | **1,693** | Quantitative observations from ICP-OES & AAS studies |
+| **Food Categories (`Category`)** | **21** | **18** populated categories + **3** standards-ready categories |
+| **Literature Sources (`ResearchSource`)** | **38** | Peer-reviewed scientific papers (`source_id` 1–38) |
+| **Regulatory Standards (`ReferenceStandard`)** | **192** | `179` PSQCA + `7` Codex (`CXS 193-1995`) + `6` EU (`2023/915`) |
+| **Precomputed Analyses (`AnalysisResult`)** | **519** | `369` graded (`A–F`) + `150` `Insufficient Data` (`MIN_ELIGIBLE_NOT_MET`) |
 
 ---
 
 ## 🧰 Tech Stack
 
-| Layer               | Technology                                            | Justification                                                                                                                     |
-| ------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Mobile App**      | React Native + Expo + TypeScript                      | Cross-platform with Expo; TypeScript enables shared types with backend                                                            |
-| **Backend**         | Node.js 20 LTS + Express + TypeScript                 | Minimal framework for explicit architecture design; sole backend developer with advanced JS skills                                |
-| **ORM**             | Prisma                                                | Schema-first, auto-generated TypeScript types, version-controlled migrations, excellent PostgreSQL support                        |
-| **Database**        | PostgreSQL 15 + pgvector                              | ACID compliance for research data; pgvector enables semantic search without a separate vector database                            |
-| **AI / LLM**        | OpenAI API (GPT-4o-mini + text-embedding-3-small)     | GPT-4o-mini: $0.60/M input tokens; text-embedding-3-small: $0.02/M tokens; ~$0.01 total for 262 records                          |
-| **AI Fallback**     | LLM Provider Abstraction Layer                        | Interface-based architecture enables hot-swapping to Groq or local models                                                        |
-| **Cloud**           | AWS                                                   | EC2 t2.micro + RDS db.t3.micro + S3; scalable, industry-standard cloud infrastructure                                            |
-| **Process Manager** | PM2                                                   | Production-grade Node.js process management on EC2                                                                                |
-| **Reverse Proxy**   | Nginx                                                 | SSL termination, static file serving, rate limiting                                                                               |
-| **CI/CD**           | GitHub Actions                                        | Automated testing and deployment workflows                                                                                        |
-| **Version Control** | Git + GitHub                                          | Two repositories: `SafeBite-Backend` and `SafeBite-Mobile`                                                                        |
+| Layer | Technology |
+| --- | --- |
+| **Runtime & Framework** | Node.js (≥ 20 LTS, native `process.loadEnvFile`), Express 5, TypeScript 5.7 |
+| **Database & ORM** | PostgreSQL 15 + `pgvector`, Prisma ORM 6.4 |
+| **Validation & Security** | Zod, Helmet, CORS, `express-rate-limit`, `bcrypt`, `jsonwebtoken` |
+| **Storage & Email** | AWS S3 (`@aws-sdk/client-s3`, presigned URLs), Mailtrap API + Nodemailer SMTP |
+| **API Docs** | Swagger UI (`/docs`) + OpenAPI 3.0 spec (`/openapi.json`) |
+| **Data Ingestion** | `xlsx` seed pipelines (`prisma/seed.ts`, `prisma/seed-products.ts`, `prisma/seed-standards.ts`) |
+| **AI / RAG (Planned)** | OpenAI (`text-embedding-3-small`) + Groq fallback via `VectorStore` (`pgvector`) |
 
 ---
 
@@ -135,163 +77,224 @@ Pakistani consumers lack accessible, evidence-based information about food safet
 
 ### Prerequisites
 
-- **Node.js** ≥ 20 LTS
-- **PostgreSQL** 15+ with the `pgvector` extension
-- **npm** or **yarn**
+- **Node.js** `>= 20.0.0`
+- **PostgreSQL 15+** with the `pgvector` extension (or Docker)
+- **npm**
 
-### Environment Variables
-
-Create a `.env` file in the project root (see `.env.example`):
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/safebite?schema=public"
-OPENAI_API_KEY="sk-..."
-GROQ_API_KEY="gsk_..."          # optional fallback
-PORT=3000
-NODE_ENV=development
-```
-
-### Installation
+### 1. Clone & Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/SafeBite-Backend.git
+git clone https://github.com/MadG0blin359/SafeBite-Backend.git
 cd SafeBite-Backend
-
-# Install dependencies
 npm install
-
-# Generate Prisma client
-npx prisma generate
-
-# Run database migrations
-npx prisma migrate dev
-
-# Seed the database
-npx prisma db seed
-
-# Start the development server
-npm run dev
 ```
 
-The server will start at `http://localhost:3000`.
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+Key environment variables (validated at startup by `src/config/env.ts`):
+
+| Variable | Description |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string (`pgvector` enabled) |
+| `JWT_SECRET` | Secret key for JWT signing (required ≥ 32 chars in `production`) |
+| `JWT_EXPIRES_IN` | Token lifetime (default `90d`) |
+| `PORT` | Server port (default `3000`) |
+| `CORS_ORIGIN` | Allowed origins (`*` or comma-separated list) |
+| `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME` | AWS S3 media upload/signed URL config |
+| `MAILTRAP_API_TOKEN`, `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` | Primary transactional email delivery (with optional `SMTP_*` fallback) |
+| `OPENAI_API_KEY`, `GROQ_API_KEY` | AI provider keys for the RAG assistant |
+
+### 3. Start PostgreSQL (`pgvector`) & Seed
+
+```bash
+# Start local PostgreSQL 15 + pgvector via Docker
+docker compose up -d
+
+# Generate Prisma client, apply migrations, and seed standards + products + analyses
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
+```
+
+### 4. Run the Server & Tests
+
+```bash
+# Development server (hot reload)
+npm run dev
+
+# Type-check or production build
+npm run typecheck
+npm run build
+npm start
+
+# End-to-end API smoke/regression suite (against a running server)
+npm run test:e2e
+```
+
+Once running, interactive API documentation is available at:
+- Swagger UI: `http://localhost:3000/docs`
+- OpenAPI JSON: `http://localhost:3000/openapi.json`
 
 ---
 
 ## 📡 API Endpoints
 
-| Method | Endpoint                       | Description                              |
-| ------ | ------------------------------ | ---------------------------------------- |
-| `GET`  | `/api/products/:barcode`       | Look up a product by barcode             |
-| `GET`  | `/api/products`                | List all products (with pagination)      |
-| `GET`  | `/api/categories`              | Browse all food categories               |
-| `GET`  | `/api/categories/:id/products` | Products in a specific category          |
-| `GET`  | `/api/safety/:productId`       | Safety analysis for a product            |
-| `GET`  | `/api/alternatives/:productId` | Safer alternatives in the same category  |
-| `POST` | `/api/chat`                    | RAG-powered chatbot query                |
+### Health & Docs
 
-> **Note:** Full API documentation is available via Swagger UI at `/docs` (and the raw OpenAPI spec at `/openapi.json`) when the server is running.
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/health` | Liveness health check |
+| `GET` | `/ready` | Readiness check (database connectivity) |
+| `GET` | `/docs` | Interactive Swagger UI |
+| `GET` | `/openapi.json` | Raw OpenAPI 3.0 JSON specification |
+
+### Authentication (`/api/auth`)
+
+| Method | Endpoint | Auth | Description |
+| --- | --- | :---: | --- |
+| `POST` | `/api/auth/validate-email` | — | Validate email format/domain availability |
+| `POST` | `/api/auth/signup` | — | Register account and send verification OTP |
+| `POST` | `/api/auth/verify-email` | — | Verify email address with OTP |
+| `POST` | `/api/auth/resend-verification-otp` | — | Resend email verification OTP |
+| `POST` | `/api/auth/login` | — | Authenticate and issue JWT |
+| `POST` | `/api/auth/forgot-password` | — | Initiate 3-step password reset OTP |
+| `POST` | `/api/auth/verify-reset-otp` | — | Verify password reset OTP |
+| `POST` | `/api/auth/reset-password` | — | Reset password with verified token |
+| `GET` | `/api/auth/profile` | JWT | Get authenticated user profile |
+| `PATCH` | `/api/auth/profile` | JWT | Update user profile |
+| `POST` | `/api/auth/logout` | JWT | Invalidate active session (`tokenVersion`) |
+
+### Products, Categories, Safety & Standards
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/products` | List/search products (`search`/`q`, `categoryId`, `brand`, `hasBarcode`, `productType`, `includeBenchmarks`, `grade`, `page`, `limit`) |
+| `GET` | `/api/products/barcode/:barcode` | Look up product by EAN/UPC/GTIN barcode |
+| `GET` | `/api/products/:id` | Get full product details, measurements, and analysis |
+| `GET` | `/api/categories` | List all food categories |
+| `GET` | `/api/categories/:id` | Get category details |
+| `GET` | `/api/categories/:id/products` | List products in a category |
+| `GET` | `/api/safety/:productId` | Detailed safety breakdown (per-contaminant CLR, standards, CCI, grade) |
+| `GET` | `/api/alternatives/:productId` | Safer product alternatives in the same category |
+| `GET` | `/api/standards` | Query regulatory reference limits |
+| `GET` | `/api/standards/summary` | Summary statistics of seeded standards |
+| `GET` | `/api/standards/categories/:categoryId` | Resolve applicable limits for a category |
+| `GET` | `/api/standards/:id` | Get a specific regulatory standard record |
+
+### User Data (`/api/user`, JWT required)
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/user/history` | Get scan & search history |
+| `POST` | `/api/user/history/scan` | Record a product scan |
+| `POST` | `/api/user/history/search` | Record a search query |
+| `DELETE` | `/api/user/history` | Clear user history |
+| `GET` / `POST` / `DELETE` | `/api/user/favorites` (`/:productId`) | Manage favorite products |
+| `GET` / `POST` / `DELETE` | `/api/user/watchlist` (`/:productId`) | Manage product safety watchlist |
+| `GET` / `DELETE` | `/api/user/health-profile` | View or clear health profile |
+| `PUT` | `/api/user/health-profile/consent` | Update health-context consent |
+| `PUT` | `/api/user/health-profile/tags` | Update health tags (e.g., `PREGNANCY`, `INFANT`) |
+
+### Storage (`/api/storage`, JWT required)
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/storage/upload` | Direct multipart image upload (JPEG/PNG/WebP, max 10 MB) to S3 |
+| `POST` | `/api/storage/signed-upload` | Generate presigned S3 PUT upload URL |
+| `POST` | `/api/storage/signed-url` | Generate presigned S3 download URL |
+| `GET` | `/api/storage/files` | List accessible bucket files |
+| `DELETE` | `/api/storage/files` | Delete owned/authorized files |
 
 ---
 
 ## 🗄 Database Schema
 
-The database consists of 7 core tables:
+Defined in [prisma/schema.prisma](prisma/schema.prisma) across 14 models:
 
-```
-Products ──────────┐
-                    ├──► ResearchData ──► ReferenceStandards
-Categories ────────┘
-                         VectorStore (pgvector)
-```
-
-| Table                  | Purpose                                                    |
-| ---------------------- | ---------------------------------------------------------- |
-| `Products`             | Barcode, name, brand, category, image URL                  |
-| `Categories`           | Food category taxonomy (20 categories)                     |
-| `ResearchData`         | Heavy metal measurements from peer-reviewed studies        |
-| `ReferenceStandards`   | Safety limits from Codex, EU, and PSQCA                    |
-| `VectorStore`          | Embeddings for RAG semantic search (pgvector)              |
+- **Users & Auth:** `User`, `EmailVerificationToken`, `PasswordResetToken`
+- **Catalog & Barcodes:** `Category`, `Product` (`ProductType`, `isConsumerFacing`), `ProductBarcode`
+- **Research Evidence:** `ResearchSource`, `ResearchData` (`EvidenceLevel`: `PRODUCT_SPECIFIC`, `BRAND_LEVEL`, `CATEGORY_LEVEL`)
+- **Standards & Scoring:** `ReferenceStandard`, `AnalysisResult` (`ruleVersion`, `clrBreakdown`, `cci`, `grade`, `excludedReasons`)
+- **Guidance & RAG:** `HealthContextEvidence`, `ExposureReductionGuidance`, `VectorStore` (`vector(1536)`)
+- **User Activity:** `SearchHistory`, `ScanHistory`, `Favorite`, `Watchlist`
 
 ---
 
-## 🤖 RAG Pipeline
+## ⚖️ Safety Analysis & Standards Hierarchy
 
-The Retrieval-Augmented Generation pipeline follows a four-step flow:
+### Tracked Contaminants
 
+- **Toxic Heavy Metals Evaluated:** Lead (`Pb`), Cadmium (`Cd`), Chromium (`Cr`), Cobalt (`Co`), Copper (`Cu`)
+- **Nutritional Minerals Excluded from Toxicity Grading:** Iron (`Fe`), Zinc (`Zn`)
+
+### Standard Resolution Order
+
+`standardResolverService` resolves the primary applicable limit per contaminant and product matrix in order:
+
+1. **Primary National (`PRIMARY_NATIONAL`):** **PSQCA** (Pakistan Standards & Quality Control Authority)
+2. **International Fallback (`INTERNATIONAL_FALLBACK`):** **Codex Alimentarius** (`CXS 193-1995`) → **European Union** (`EU 2023/915`)
+3. **Secondary Comparison (`SECONDARY_COMPARISON`):** Supplemental Codex / EU reference limits when a national limit already serves as primary
+
+### Deterministic Scoring (`ruleVersion = "1.0.0"`)
+
+- **Contamination Limit Ratio:** `CLR = concentration / limitValue` (with automatic unit normalization and matrix/basis compatibility checks; `BELOW_LOD` is evaluated conservatively against the limit).
+- **Cumulative Contamination Index (`CCI`):** Mean of eligible per-contaminant CLRs (`MIN_ELIGIBLE_NOT_MET` / `Insufficient Data` when eligibility thresholds are not met).
+- **Decision-Support Grades:** `A` through `F` computed deterministically alongside exact status strings and reason codes from `src/constants/status.constants.ts`.
+
+---
+
+## 📁 Project Structure
+
+```text
+SafeBite-Backend/
+├── analysis/               # Dataset coverage, barcode, standards gap & logo reports
+├── plan/                   # RAG & model implementation plan
+├── prisma/
+│   ├── data/               # Cleaned product/barcode workbooks & PSQCA standards Excel
+│   ├── mappings/           # Category, barcode recovery, display & PSQCA mappings
+│   ├── migrations/         # Versioned Prisma SQL migrations
+│   ├── schema.prisma       # PostgreSQL + pgvector Prisma schema
+│   ├── seed.ts             # Master seed orchestrator
+│   ├── seed-products.ts    # Products, barcodes, measurements & analyses seeder
+│   └── seed-standards.ts   # Categories & PSQCA standards seeder
+├── scripts/
+│   ├── get_breakdown_stats.ts
+│   └── test-endpoints.ts   # E2E API regression test suite
+├── src/
+│   ├── config/             # Env validation (Zod) & Prisma singleton
+│   ├── constants/          # Status catalogue, reason codes & contaminant registry
+│   ├── controllers/        # Route handlers
+│   ├── middlewares/        # Auth, Zod validation, rate limiting, error handler
+│   ├── routes/             # Express 5 route modules
+│   ├── services/           # CLR, scoring, safety engine, standards resolver, auth, S3, email
+│   ├── utils/              # Logger, AppError, barcode & Swagger helpers
+│   └── validators/         # Zod request schemas
+├── docker-compose.yml      # Local pgvector PostgreSQL 15 service
+├── openapi.json            # OpenAPI 3.0 specification
+└── SafeBite_SRS_V4_1.md    # Software Requirements Specification v4.1
 ```
-┌───────────┐    ┌───────────┐    ┌────────────┐    ┌────────────┐
-│  Embed    │ →  │   Store   │ →  │  Retrieve  │ →  │  Generate  │
-│  (OpenAI) │    │ (pgvector)│    │  (cosine)  │    │ (GPT-4o)   │
-└───────────┘    └───────────┘    └────────────┘    └────────────┘
-```
-
-1. **Embed** — Research data and product info are embedded using `text-embedding-3-small`
-2. **Store** — Vectors are stored in PostgreSQL via the `pgvector` extension
-3. **Retrieve** — User queries are embedded and matched against stored vectors using cosine similarity
-4. **Generate** — Retrieved context + user query are sent to GPT-4o-mini for grounded responses
 
 ---
 
-## 📊 Safety Standards
+## 🗓 Roadmap & Implementation Status
 
-SafeBite compares contamination data against a three-tier hierarchy of international food safety standards:
-
-| Priority      | Standard                           | Role                         | Source                                                                                      |
-| ------------- | ---------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------- |
-| **Primary**   | Codex Alimentarius (CAC)           | Main comparison benchmark    | FAO/WHO General Standard for Contaminants and Toxins in Food and Feed (CODEX STAN 193-1995) |
-| **Secondary** | EU Regulation (EC) No 1881/2006    | Stringent regional benchmark | European Commission — most comprehensive documented limits                                  |
-| **Tertiary**  | PSQCA (Pakistan)                   | Local relevance              | Pakistan Standards and Quality Control Authority — where explicitly documented              |
-
-**Contaminant classification:**
-- **Toxic contaminants** (analyzed): Lead (Pb), Cadmium (Cd), Chromium (Cr), Cobalt (Co), Copper (Cu)
-- **Nutritional minerals** (separated): Iron (Fe), Zinc (Zn)
-
----
-
-## 🗓 Project Roadmap
-
-### Phase 1 — Foundation (Days 1–6)
-
-- [x] Initialize backend repo (Node.js 20 + Express + TypeScript + Prisma)
-- [ ] Clean and validate dataset (fix typos, duplicates, unit inconsistencies)
-- [ ] Reclassify metals — separate toxic contaminants from nutrients
-- [ ] Collect and populate reference standards (Codex + EU limits for 20 categories)
-- [ ] Write Prisma schema (7 tables) and run first migration
-- [ ] Seed database with cleaned dataset
-
-### Phase 2 — Core API (Days 7–10)
-
-- [ ] Build `GET /api/products/:barcode` endpoint
-- [ ] Implement safety analysis engine
-- [ ] Design RAG pipeline architecture
-- [ ] Build chatbot endpoint (`POST /api/chat`)
-
-### Phase 3 — Integration & Deployment (Days 11–14)
-
-- [ ] Deploy to AWS (EC2 + RDS + S3)
-- [ ] Configure Nginx reverse proxy with SSL
-- [ ] Set up PM2 process manager
-- [ ] Configure GitHub Actions CI/CD pipeline
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'feat: add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+- [x] Express 5 + TypeScript + Prisma + PostgreSQL 15 (`pgvector`) backend foundation
+- [x] 14-model Prisma schema & migrations (including `ProductType` & `isConsumerFacing`)
+- [x] Cleaned dataset ingestion: 519 products, 848 GS1-validated barcodes, 1,693 measurements, 38 sources, 192 regulatory limits
+- [x] Deterministic safety engine (`CLR`, `CCI`, `A–F` grades, `BELOW_LOD` handling, `PSQCA → Codex → EU` resolution)
+- [x] Full REST API: auth + email OTP, products, barcodes, categories, safety, alternatives, standards, user history/favorites/watchlist/health-profile, and AWS S3 storage
+- [x] Swagger UI (`/docs`), OpenAPI spec (`/openapi.json`), and E2E API regression suite (`npm run test:e2e`)
+- [ ] RAG embedding pipeline (`VectorStore` ingestion from the 38 research PDFs) and `POST /api/chat` assistant endpoint
+- [ ] Production AWS deployment (EC2 + RDS + Nginx + PM2) and CI/CD pipeline
 
 ---
 
 ## 📄 License
 
-This project is developed as a Final Year Project (FYP). Please contact the team for licensing inquiries.
-
----
-
-<p align="center">
-  <sub>Built with ❤️ for safer food choices in Pakistan</sub>
-</p>
+Licensed under the [MIT License](LICENSE).
