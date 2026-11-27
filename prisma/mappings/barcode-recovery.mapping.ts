@@ -26,6 +26,8 @@ export interface RestoredUpcEntry {
 
 /**
  * 12 Products recovered from Pakistan_OFF_Repository
+ * Note: Specific product-line barcodes are split cleanly across SKUs so parent-brand
+ * broad matches (e.g. MILK-008 Nestle milk pack) cannot hijack Cerelac / NAN / Nesfruta barcodes.
  */
 export const RECOVERED_OFF_BARCODES: RecoveredBarcodeEntry[] = [
   {
@@ -42,18 +44,18 @@ export const RECOVERED_OFF_BARCODES: RecoveredBarcodeEntry[] = [
     category: "Cereal-based baby food",
     brand: "Nestle",
     sampleName: "Yogart+mango+orange",
-    barcodes: ["8961008210537", "8961008220499"],
-    offRecordName: "Nestle Cerelac 6 month large, Nestle Cerelac",
-    matchConfidence: "Exact Brand & Product Line Match",
+    barcodes: ["8961008210537"],
+    offRecordName: "Nestle Cerelac 6 month large",
+    matchConfidence: "Exact Brand & Product Line Match (Reassigned from MILK-008)",
   },
   {
     productCode: "BBF-S14",
     category: "Cereal-based baby food",
     brand: "Nestle",
     sampleName: "Cerelac apple and orange",
-    barcodes: ["8961008210537", "8961008220499"],
-    offRecordName: "Nestle Cerelac 6 month large, Nestle Cerelac",
-    matchConfidence: "Exact Brand & Product Line Match",
+    barcodes: ["8961008220499"],
+    offRecordName: "Nestle Cerelac",
+    matchConfidence: "Exact Brand & Product Line Match (Reassigned from MILK-008)",
   },
   {
     productCode: "BBF-S10",
@@ -61,17 +63,26 @@ export const RECOVERED_OFF_BARCODES: RecoveredBarcodeEntry[] = [
     brand: "Nestle",
     sampleName: "Nan vanilla",
     barcodes: ["7613037038309", "4800361412445"],
-    offRecordName: "NAN Optipro 1 (Nestle), NANGROW (nestle)",
-    matchConfidence: "Exact Brand & Formula Line Match",
+    offRecordName: "NAN Optipro 1 (Nestle), NANGROW (Nestle)",
+    matchConfidence: "Exact Brand & Formula Line Match (Reassigned from MILK-008)",
   },
   {
     productCode: "JU9",
     category: "Juices",
     brand: "Nesfruta",
     sampleName: "Apple Juice",
-    barcodes: ["8961008213866", "8961008222790"],
-    offRecordName: "Nesfruta, Nesfruta (Mango Fruit Drink) (Nestle)",
-    matchConfidence: "Exact Brand Match",
+    barcodes: ["8961008213866"],
+    offRecordName: "Nesfruta (Nestle)",
+    matchConfidence: "Exact Brand Match (Reassigned from MILK-008)",
+  },
+  {
+    productCode: "JU3",
+    category: "Juices",
+    brand: "Nesfruta",
+    sampleName: "Mango Juice",
+    barcodes: ["8961008222790"],
+    offRecordName: "Nesfruta Mango Fruit Drink (Nestle)",
+    matchConfidence: "Exact Brand & Flavor Match (Reassigned from JU1)",
   },
   {
     productCode: "JU10",
@@ -83,58 +94,13 @@ export const RECOVERED_OFF_BARCODES: RecoveredBarcodeEntry[] = [
     matchConfidence: "Brand & Category Match",
   },
   {
-    productCode: "JU12",
-    category: "Juices",
-    brand: "Tops",
-    sampleName: "Apple Juice",
-    barcodes: ["1860201810254"],
-    offRecordName: "Frootopia (Tops, Category: Juice)",
-    matchConfidence: "Brand & Category Match",
-  },
-  {
-    productCode: "JU16",
-    category: "Juices",
-    brand: "Tops Pouch",
-    sampleName: "Guava Juice",
-    barcodes: ["1860201810254"],
-    offRecordName: "Frootopia (Tops, Category: Juice)",
-    matchConfidence: "Brand & Category Match",
-  },
-  {
-    productCode: "JU17",
-    category: "Juices",
-    brand: "Tops",
-    sampleName: "Guava Juice",
-    barcodes: ["1860201810254"],
-    offRecordName: "Frootopia (Tops, Category: Juice)",
-    matchConfidence: "Brand & Category Match",
-  },
-  {
-    productCode: "JU21",
-    category: "Juices",
-    brand: "Tops",
-    sampleName: "Red Grapes Juice",
-    barcodes: ["1860201810254"],
-    offRecordName: "Frootopia (Tops, Category: Juice)",
-    matchConfidence: "Brand & Category Match",
-  },
-  {
-    productCode: "JU27",
-    category: "Juices",
-    brand: "Tops",
-    sampleName: "Lychee Juice",
-    barcodes: ["1860201810254"],
-    offRecordName: "Frootopia (Tops, Category: Juice)",
-    matchConfidence: "Brand & Category Match",
-  },
-  {
     productCode: "TEA-019",
     category: "Tea",
     brand: "Kashmeri Green Tea",
     sampleName: "Kashmeri Green Tea",
     barcodes: ["8964001400349", "8961008300450", "8961008217277", "8961008217260"],
-    offRecordName: "Kashmiri Tea (Vital Tea), everyday Kashmiri tea (nestle)",
-    matchConfidence: "Category / Variant Match",
+    offRecordName: "Kashmiri Tea (Vital Tea), Everyday Kashmiri Tea (Nestle)",
+    matchConfidence: "Category / Variant Match (8961008300450 Reassigned from MILK-011)",
   },
 ];
 
@@ -215,23 +181,60 @@ export const RESTORED_UPCA_BARCODES: RestoredUpcEntry[] = [
 ];
 
 /**
- * 52 Non-barcoded bulk and loose market commodities:
- * - 16 open-market bulk commodities
- * - 27 loose school-zone chocolates (CHOC-001 through CHOC-030 except CHOC-003)
- * - 9 origin loose teas
+ * 27 Individually wrapped informal cottage-industry school-zone candies
+ * (CHOC-001 through CHOC-030 excluding CHOC-003 Candyland commercial, CHOC-004 barcoded Milo Sip, and CHOC-029 barcoded)
  */
-export const BULK_LOOSE_COMMODITY_CODES = new Set<string>([
-  // 16 Open-market bulk commodities
-  "K11", "JU28", "JU33", "MM4", "MM5", "A10", "A11", "TEA-028", "TEA-035",
+export const INFORMAL_WRAPPED_CANDY_CODES = new Set<string>([
+  "CHOC-001", "CHOC-002", "CHOC-005", "CHOC-006", "CHOC-007", "CHOC-008",
+  "CHOC-009", "CHOC-010", "CHOC-011", "CHOC-012", "CHOC-013", "CHOC-014",
+  "CHOC-015", "CHOC-016", "CHOC-017", "CHOC-018", "CHOC-019", "CHOC-020",
+  "CHOC-021", "CHOC-022", "CHOC-023", "CHOC-024", "CHOC-025", "CHOC-026",
+  "CHOC-027", "CHOC-028", "CHOC-030",
+]);
+
+/**
+ * 25 Genuine loose/open-market commodities (11 loose teas, 7 KPK floral honeys, 7 open street foods)
+ */
+export const TRUE_LOOSE_COMMODITY_CODES = new Set<string>([
+  // 7 Open-market street foods
+  "K11", "JU28", "JU33", "MM4", "MM5", "A10", "A11",
+  // 7 KPK floral open-market honeys
   "2014-KPK-HU01", "2014-KPK-HU02", "2014-KPK-HU03", "2014-KPK-HU04",
   "2014-KPK-HU05", "2014-KPK-HU06", "2014-KPK-HU07",
-  // 27 Loose school-zone chocolates (CHOC-001 - CHOC-030 excluding CHOC-003)
-  "CHOC-001", "CHOC-002", "CHOC-004", "CHOC-005", "CHOC-006", "CHOC-007",
-  "CHOC-008", "CHOC-009", "CHOC-010", "CHOC-011", "CHOC-012", "CHOC-013",
-  "CHOC-014", "CHOC-015", "CHOC-016", "CHOC-017", "CHOC-018", "CHOC-019",
-  "CHOC-020", "CHOC-021", "CHOC-022", "CHOC-023", "CHOC-024", "CHOC-025",
-  "CHOC-026", "CHOC-027", "CHOC-028", "CHOC-029", "CHOC-030",
-  // 9 Unbranded/origin loose teas
+  // 11 Unbranded/origin loose teas
   "TEA-009", "TEA-010", "TEA-011", "TEA-013", "TEA-016",
-  "TEA-020", "TEA-021", "TEA-027", "TEA-029",
+  "TEA-020", "TEA-021", "TEA-027", "TEA-028", "TEA-029", "TEA-035",
+]);
+
+/**
+ * Backwards-compatible alias for genuine loose commodities
+ */
+export const BULK_LOOSE_COMMODITY_CODES = TRUE_LOOSE_COMMODITY_CODES;
+
+/**
+ * 8 Exact & spelling-duplicate commercial product rows merged into their canonical product codes
+ * (duplicateProductCode -> canonicalProductCode)
+ */
+export const DUPLICATE_PRODUCT_MERGES: Record<string, string> = {
+  JU12: "JU10",                     // Tops Apple Juice
+  K9: "K4",                         // Bake Parlor Tomato Ketchup
+  JM3: "JM1",                       // Mitchell's Strawberry Jam
+  JM13: "JM11",                     // Mitchell's Mixed Fruit Jam
+  "MILK-008": "MILK-006",           // Nestle MilkPak (merges "Nestle milk pack" -> "Milk Pak")
+  "2019-SINDH-H11": "2014-KPK-H05", // Young's Honey (merges "Youngs honey" -> "Young's")
+  "2014-KPK-H01": "2019-SINDH-H09", // Marhaba Honey (merges unbarcoded -> barcoded Marhaba honey)
+  "2014-KPK-H07": "2019-SINDH-H12", // Langnese Honey (merges "Langness" -> barcoded "Lagneese honey")
+};
+
+/**
+ * Product code prefixes belonging to non-consumer academic/blinded/raw/pooled research records
+ * (kept in DB as RESEARCH_BENCHMARK with isConsumerFacing=false unless zero-data placeholder)
+ */
+export const NON_CONSUMER_RESEARCH_PREFIXES = new Set<string>([
+  // Pooled statistical meta-aggregates
+  "CNF", "BDJ", "BDS", "RYO", "RCE", "CHC2",
+  // Blinded / anonymized research study codes
+  "JFS", "BEV", "MNJ", "RSK", "RWM", "TEA2", "TEA3", "KSP", "BSM",
+  // Raw farm produce & animal organ samples
+  "VEG", "MET", "BRL", "EGA", "EGY", "SND",
 ]);

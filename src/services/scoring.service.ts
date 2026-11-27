@@ -42,11 +42,19 @@ export const scoringService = {
     const excludedReasons: Record<string, string> = {};
 
     for (const res of clrResults) {
-      if (res.measuredConcentration !== null && res.measuredConcentration !== undefined) {
+      const hasNumericMeasurement =
+        res.measuredConcentration !== null && res.measuredConcentration !== undefined;
+      const isCompliantBelowLod =
+        res.reasonCode === ReasonCodes.BELOW_LOD &&
+        res.isEligibleForCci &&
+        res.clr !== null &&
+        res.clr !== undefined;
+
+      if (hasNumericMeasurement || isCompliantBelowLod) {
         testedCount++;
       } else {
         missingCount++;
-        excludedReasons[res.contaminant] = ReasonCodes.NO_MEASUREMENT;
+        excludedReasons[res.contaminant] = res.reasonCode || ReasonCodes.NO_MEASUREMENT;
         continue;
       }
 

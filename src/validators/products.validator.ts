@@ -1,19 +1,25 @@
 import { z } from "zod";
 
+const booleanQueryParam = z
+  .preprocess((val) => {
+    if (typeof val === "string") {
+      if (val.toLowerCase() === "true") return true;
+      if (val.toLowerCase() === "false") return false;
+    }
+    return val;
+  }, z.boolean())
+  .optional();
+
 export const listProductsQuerySchema = z.object({
   search: z.string().trim().min(1).max(100).optional(),
   q: z.string().trim().min(1).max(100).optional(),
   categoryId: z.string().uuid({ message: "categoryId must be a valid UUID" }).optional(),
   brand: z.string().trim().min(1).max(100).optional(),
-  hasBarcode: z
-    .preprocess((val) => {
-      if (typeof val === "string") {
-        if (val.toLowerCase() === "true") return true;
-        if (val.toLowerCase() === "false") return false;
-      }
-      return val;
-    }, z.boolean())
+  hasBarcode: booleanQueryParam,
+  productType: z
+    .enum(["COMMERCIAL_PACKAGED", "INFORMAL_WRAPPED", "LOOSE_COMMODITY", "RESEARCH_BENCHMARK"])
     .optional(),
+  includeBenchmarks: booleanQueryParam,
   grade: z.enum(["A", "B", "C", "D", "F"]).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

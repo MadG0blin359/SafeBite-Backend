@@ -52,6 +52,8 @@ function formatProductDetail(product: any, matchedBarcode?: string) {
     brand: product.brand,
     packageSize: product.packageSize,
     matrix: product.matrix,
+    productType: product.productType,
+    isConsumerFacing: product.isConsumerFacing,
     imageUrl: product.imageUrl,
     category: product.category,
     ...(matchedBarcode ? { matchedBarcode } : {}),
@@ -87,6 +89,8 @@ export const productsService = {
       categoryId,
       brand,
       hasBarcode,
+      productType,
+      includeBenchmarks = false,
       grade,
       page = 1,
       limit = 20,
@@ -94,47 +98,58 @@ export const productsService = {
 
     const searchTerm = search || q;
 
-    const where: Prisma.ProductWhereInput = {};
+    const andConditions: Prisma.ProductWhereInput[] = [];
+
+    // Surface consumer-facing products by default unless benchmarks are explicitly requested
+    if (productType) {
+      andConditions.push({ productType });
+    } else if (!includeBenchmarks) {
+      andConditions.push({ isConsumerFacing: true });
+    }
 
     if (categoryId) {
-      where.categoryId = categoryId;
+      andConditions.push({ categoryId });
     }
 
     if (brand) {
-      where.brand = { contains: brand, mode: "insensitive" };
+      andConditions.push({ brand: { contains: brand, mode: "insensitive" } });
     }
 
     if (searchTerm) {
-      where.OR = [
-        { name: { contains: searchTerm, mode: "insensitive" } },
-        { brand: { contains: searchTerm, mode: "insensitive" } },
-        { productCode: { contains: searchTerm, mode: "insensitive" } },
-        { barcode: { contains: searchTerm } },
-        { barcodes: { some: { barcode: { contains: searchTerm } } } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { brand: { contains: searchTerm, mode: "insensitive" } },
+          { productCode: { contains: searchTerm, mode: "insensitive" } },
+          { barcode: { contains: searchTerm } },
+          { barcodes: { some: { barcode: { contains: searchTerm } } } },
+        ],
+      });
     }
 
     if (hasBarcode !== undefined) {
       if (hasBarcode) {
-        where.OR = [
-          ...(where.OR || []),
-          { barcode: { not: null } },
-          { barcodes: { some: {} } },
-        ];
+        andConditions.push({
+          OR: [{ barcode: { not: null } }, { barcodes: { some: {} } }],
+        });
       } else {
-        where.barcode = null;
-        where.barcodes = { none: {} };
+        andConditions.push({ barcode: null, barcodes: { none: {} } });
       }
     }
 
     if (grade) {
-      where.analysisResults = {
-        some: {
-          ruleVersion: ACTIVE_RULE_VERSION,
-          grade,
+      andConditions.push({
+        analysisResults: {
+          some: {
+            ruleVersion: ACTIVE_RULE_VERSION,
+            grade,
+          },
         },
-      };
+      });
     }
+
+    const where: Prisma.ProductWhereInput =
+      andConditions.length > 0 ? { AND: andConditions } : {};
 
     const skip = (page - 1) * limit;
 
@@ -181,6 +196,8 @@ export const productsService = {
         brand: product.brand,
         packageSize: product.packageSize,
         matrix: product.matrix,
+        productType: product.productType,
+        isConsumerFacing: product.isConsumerFacing,
         imageUrl: product.imageUrl,
         category: product.category,
         primaryBarcode: product.barcode,
@@ -262,7 +279,7 @@ export const productsService = {
       include: {
         _count: {
           select: {
-            products: true,
+            products: { where: { isConsumerFacing: true } },
             standards: true,
           },
         },
@@ -288,7 +305,7 @@ export const productsService = {
       include: {
         _count: {
           select: {
-            products: true,
+            products: { where: { isConsumerFacing: true } },
             standards: true,
           },
         },

@@ -61,11 +61,12 @@ export const alternativeService = {
 
     const currentAnalysis = product.analysisResults[0];
 
-    // Query other products in the same category that have valid analysis results under active rule version
+    // Query other consumer-facing products in the same category that have valid analysis results under active rule version
     const candidateProducts = await prisma.product.findMany({
       where: {
         categoryId: product.categoryId,
         id: { not: productId },
+        isConsumerFacing: true,
         analysisResults: {
           some: {
             ruleVersion: ACTIVE_RULE_VERSION,

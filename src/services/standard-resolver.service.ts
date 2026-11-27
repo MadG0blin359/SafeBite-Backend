@@ -132,6 +132,17 @@ export const standardResolverService = {
       );
     }
 
+    if (!primaryReference) {
+      primaryReference = matchStandardInMemory(
+        standards,
+        contaminant,
+        [ReferenceRole.INTERNATIONAL_FALLBACK],
+        [StandardAuthority.EU],
+        productMatrix,
+        productName
+      );
+    }
+
     const secondaryReference = matchStandardInMemory(
       standards,
       contaminant,
@@ -183,6 +194,17 @@ export const standardResolverService = {
           c,
           [ReferenceRole.INTERNATIONAL_FALLBACK],
           [StandardAuthority.PSQCA, StandardAuthority.CODEX],
+          productMatrix,
+          productName
+        );
+      }
+
+      if (!primaryReference) {
+        primaryReference = matchStandardInMemory(
+          standards,
+          c,
+          [ReferenceRole.INTERNATIONAL_FALLBACK],
+          [StandardAuthority.EU],
           productMatrix,
           productName
         );

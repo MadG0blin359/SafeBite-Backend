@@ -61,12 +61,31 @@ export const safetyEngineService = {
       const measurements = product.researchData.filter((r) => r.contaminant === contaminantEnum);
 
       // Hierarchical evidence retrieval: Product-Specific > Brand-Level > Category-Level (FR-03-07)
-      let selectedMeasurement = measurements.find((m) => m.evidenceLevel === "PRODUCT_SPECIFIC");
+      // When multiple batches exist at the same evidence tier (e.g., merged duplicate samples),
+      // select the conservative worst-case (highest measured concentration, preferring MEASURED over BELOW_LOD).
+      const selectConservative = (pool: typeof measurements) => {
+        if (pool.length === 0) return undefined;
+        if (pool.length === 1) return pool[0];
+        return [...pool].sort((a, b) => {
+          const aMeasured = a.measurementStatus === "MEASURED" && a.concentration !== null ? 1 : 0;
+          const bMeasured = b.measurementStatus === "MEASURED" && b.concentration !== null ? 1 : 0;
+          if (aMeasured !== bMeasured) return bMeasured - aMeasured;
+          return (b.concentration ?? -1) - (a.concentration ?? -1);
+        })[0];
+      };
+
+      let selectedMeasurement = selectConservative(
+        measurements.filter((m) => m.evidenceLevel === "PRODUCT_SPECIFIC")
+      );
       if (!selectedMeasurement) {
-        selectedMeasurement = measurements.find((m) => m.evidenceLevel === "BRAND_LEVEL");
+        selectedMeasurement = selectConservative(
+          measurements.filter((m) => m.evidenceLevel === "BRAND_LEVEL")
+        );
       }
       if (!selectedMeasurement) {
-        selectedMeasurement = measurements.find((m) => m.evidenceLevel === "CATEGORY_LEVEL");
+        selectedMeasurement = selectConservative(
+          measurements.filter((m) => m.evidenceLevel === "CATEGORY_LEVEL")
+        );
       }
 
       let measurementInput: ContaminantMeasurementInput | null = null;
@@ -74,6 +93,7 @@ export const safetyEngineService = {
         measurementInput = {
           contaminant,
           concentration: selectedMeasurement.concentration,
+          rawLOD: selectedMeasurement.rawLOD,
           unit: selectedMeasurement.unit,
           basis: selectedMeasurement.basis,
           evidenceLevel: selectedMeasurement.evidenceLevel,

@@ -79,29 +79,40 @@ model Category {
   @@map("categories")
 }
 
+enum ProductType {
+  COMMERCIAL_PACKAGED // Named commercial retail SKUs (barcoded or awaiting external GTIN)
+  INFORMAL_WRAPPED    // Individually named cottage-industry wrapped items (e.g., school-zone candies)
+  LOOSE_COMMODITY     // Consumer open-market / loose staples & floral/origin varieties
+  RESEARCH_BENCHMARK  // Blinded study codes, raw farm/slaughterhouse samples, pooled statistical aggregates
+}
+
 model Product {
-  id              String           @id @default(uuid())
-  productCode     String?          @unique // e.g. "S1", "CS3", "N2", "JU9" from research papers
-  barcode         String?          @unique // Primary EAN-13 or UPC-A
-  name            String
-  brand           String
-  categoryId      String
-  category        Category         @relation(fields: [categoryId], references: [id])
-  imageUrl        String?
-  packageSize     String?
-  matrix          String?          // Liquid, powder, solid, etc.
-  barcodes        ProductBarcode[]
-  researchData    ResearchData[]
-  analysisResults AnalysisResult[]
-  favorites       Favorite[]
-  watchlist       Watchlist[]
-  scanHistory     ScanHistory[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id               String           @id @default(uuid())
+  productCode      String?          @unique // e.g. "S1", "CS3", "N2", "JU9" from research papers
+  barcode          String?          @unique // Primary EAN-13 or UPC-A
+  name             String
+  brand            String
+  categoryId       String
+  category         Category         @relation(fields: [categoryId], references: [id])
+  imageUrl         String?
+  packageSize      String?
+  matrix           String?          // Liquid, powder, solid, informal_wrapped, loose_bulk, etc.
+  productType      ProductType      @default(COMMERCIAL_PACKAGED)
+  isConsumerFacing Boolean          @default(true)
+  barcodes         ProductBarcode[]
+  researchData     ResearchData[]
+  analysisResults  AnalysisResult[]
+  favorites        Favorite[]
+  watchlist        Watchlist[]
+  scanHistory      ScanHistory[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([name])
   @@index([brand])
   @@index([categoryId])
+  @@index([productType])
+  @@index([isConsumerFacing])
   @@map("products")
 }
 

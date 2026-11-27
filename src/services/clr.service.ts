@@ -11,6 +11,7 @@ import {
 export interface ContaminantMeasurementInput {
   contaminant: ContaminantRegistryType;
   concentration?: number | null;
+  rawLOD?: number | null;
   unit?: string | null;
   basis?: string | null; // e.g. "wet_mass", "dry_mass"
   evidenceLevel?: "PRODUCT_SPECIFIC" | "BRAND_LEVEL" | "CATEGORY_LEVEL";
@@ -157,6 +158,124 @@ export const clrService = {
     const contaminantSymbol = CONTAMINANT_SYMBOLS[contaminant] || "";
     const evidenceLevel = measurement?.evidenceLevel || null;
 
+    // Rule GR-01 & WHO/GEMS-Food Non-Detect Convention:
+    // Handle BELOW_LOD BEFORE checking null concentration (lab "ND" / "BDL" records store concentration=null).
+    if (measurement && measurement.measurementStatus === "BELOW_LOD") {
+      if (!primaryRef || primaryRef.limitValue === null || primaryRef.limitValue <= 0) {
+        return {
+          contaminant,
+          contaminantName,
+          contaminantSymbol,
+          measuredConcentration: measurement.concentration ?? null,
+          unit: measurement.unit || null,
+          basis: measurement.basis || null,
+          evidenceLevel,
+          statusText: StatusCatalogue.ST_06_NO_APPLICABLE_LIMIT,
+          reasonCode: ReasonCodes.NO_LIMIT,
+          isEligibleForCci: false,
+          clr: null,
+          normalizedMargin: null,
+          selectedReference: null,
+          sourceInfo: measurement.sourceInfo || null,
+        };
+      }
+
+      const normLimit = primaryRef.unit ? normalizeConcentrationToMgKg(primaryRef.limitValue, primaryRef.unit) : null;
+      const measDomain = measurement.unit ? getUnitDomain(measurement.unit) : "unknown";
+      const limitDomain = primaryRef.unit ? getUnitDomain(primaryRef.unit) : "unknown";
+      const isDomainCompatible =
+        measDomain === "unknown" ||
+        limitDomain === "unknown" ||
+        measDomain === limitDomain ||
+        ((measDomain === "volume" || limitDomain === "volume") &&
+          primaryRef.basis !== "dry_mass" &&
+          measurement.basis !== "dry_mass");
+
+      if (normLimit === null || !isDomainCompatible) {
+        return {
+          contaminant,
+          contaminantName,
+          contaminantSymbol,
+          measuredConcentration: measurement.concentration ?? null,
+          unit: measurement.unit || null,
+          basis: measurement.basis || null,
+          evidenceLevel,
+          statusText: StatusCatalogue.ST_07_NOT_COMPARABLE,
+          reasonCode: ReasonCodes.UNIT_MISMATCH,
+          isEligibleForCci: false,
+          clr: null,
+          normalizedMargin: null,
+          selectedReference: primaryRef,
+          sourceInfo: measurement.sourceInfo || null,
+        };
+      }
+
+      if (!areBasesComparable(measurement.basis, primaryRef.basis)) {
+        return {
+          contaminant,
+          contaminantName,
+          contaminantSymbol,
+          measuredConcentration: measurement.concentration ?? null,
+          unit: measurement.unit || null,
+          basis: measurement.basis || null,
+          evidenceLevel,
+          statusText: StatusCatalogue.ST_07_NOT_COMPARABLE,
+          reasonCode: ReasonCodes.BASIS_MISMATCH,
+          isEligibleForCci: false,
+          clr: null,
+          normalizedMargin: null,
+          selectedReference: primaryRef,
+          sourceInfo: measurement.sourceInfo || null,
+        };
+      }
+
+      // If numeric LOD is reported, verify LOD <= limit and apply WHO 0.5 * LOD middle-bound imputation;
+      // if rawLOD is unstated ("ND" / "BDL" in published tables), treat as confirmed compliant non-detect (CLR = 0).
+      let imputedClr = 0;
+      if (measurement.rawLOD !== null && measurement.rawLOD !== undefined && measurement.rawLOD > 0) {
+        const normLod = measurement.unit
+          ? normalizeConcentrationToMgKg(measurement.rawLOD, measurement.unit)
+          : measurement.rawLOD;
+        if (normLod === null || normLod > normLimit) {
+          return {
+            contaminant,
+            contaminantName,
+            contaminantSymbol,
+            measuredConcentration: measurement.concentration ?? null,
+            unit: measurement.unit || null,
+            basis: measurement.basis || null,
+            evidenceLevel,
+            statusText: StatusCatalogue.ST_07_NOT_COMPARABLE,
+            reasonCode: ReasonCodes.BELOW_LOD,
+            isEligibleForCci: false,
+            clr: null,
+            normalizedMargin: null,
+            selectedReference: primaryRef,
+            sourceInfo: measurement.sourceInfo || null,
+          };
+        }
+        imputedClr = Number(((0.5 * normLod) / normLimit).toFixed(4));
+      }
+
+      const normalizedMargin = Number((1.0 - imputedClr).toFixed(4));
+      return {
+        contaminant,
+        contaminantName,
+        contaminantSymbol,
+        measuredConcentration: measurement.concentration ?? null,
+        unit: measurement.unit || null,
+        basis: measurement.basis || null,
+        evidenceLevel,
+        statusText: StatusCatalogue.ST_01_BELOW_LIMIT,
+        reasonCode: ReasonCodes.BELOW_LOD,
+        isEligibleForCci: true,
+        clr: imputedClr,
+        normalizedMargin,
+        selectedReference: primaryRef,
+        sourceInfo: measurement.sourceInfo || null,
+      };
+    }
+
     // Rule GR-01: Check for missing measurement
     if (
       !measurement ||
@@ -179,26 +298,6 @@ export const clrService = {
         normalizedMargin: null,
         selectedReference: primaryRef || null,
         sourceInfo: measurement?.sourceInfo || null,
-      };
-    }
-
-    // Check measurement status edge cases
-    if (measurement.measurementStatus === "BELOW_LOD") {
-      return {
-        contaminant,
-        contaminantName,
-        contaminantSymbol,
-        measuredConcentration: measurement.concentration,
-        unit: measurement.unit || null,
-        basis: measurement.basis || null,
-        evidenceLevel,
-        statusText: StatusCatalogue.ST_07_NOT_COMPARABLE,
-        reasonCode: ReasonCodes.BELOW_LOD,
-        isEligibleForCci: false,
-        clr: null,
-        normalizedMargin: null,
-        selectedReference: primaryRef || null,
-        sourceInfo: measurement.sourceInfo || null,
       };
     }
 
